@@ -232,7 +232,11 @@
         // guides.js 의 GUIDES 중, 현재 카테고리 상품을 포함하는 가이드를 상단에 노출.
         (function showGuideBanner() {
           var wrap = document.getElementById("guide-banner");
-          var guides = Array.isArray(window.GUIDES) ? window.GUIDES : [];
+          // guides.js 는 전역 const GUIDES 로 선언됨. src 로 로드 시 window 에
+          // 자동으로 안 붙을 수 있어 typeof 로 안전하게 참조한다.
+          var guides = typeof GUIDES !== "undefined" && Array.isArray(GUIDES)
+            ? GUIDES
+            : [];
           if (!guides.length) return;
 
           // 현재 활성 카테고리에 속한 상품 slug 집합
