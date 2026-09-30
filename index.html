@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- SEO 기본 태그: 검색 노출에 도움됨. products.js 의 SITE_CONFIG 값으로 아래도 맞춰주면 좋습니다 -->
+    <!-- SEO 기본 태그: 검색 노출에 도움됨. products.js 의 SITE_CONFIG 값으로 자동 반영됩니다 -->
     <title>오늘의 추천템 | 가성비 아이템 모음</title>
     <meta
       name="description"
@@ -16,9 +16,41 @@
     <div class="disclosure" id="disclosure"></div>
 
     <header>
+      <button
+        class="theme-toggle"
+        id="theme-toggle"
+        aria-label="다크모드 전환"
+        title="다크모드 전환"
+      >
+        🌙
+      </button>
       <h1 id="site-name"></h1>
       <p id="tagline"></p>
     </header>
+
+    <!-- 검색 + 정렬 -->
+    <div class="controls">
+      <label class="search">
+        <span aria-hidden="true">🔍</span>
+        <input
+          type="text"
+          id="search"
+          placeholder="상품 이름으로 검색..."
+          autocomplete="off"
+        />
+      </label>
+      <select id="sort" aria-label="정렬">
+        <option value="default">추천순</option>
+        <option value="price-asc">가격 낮은순</option>
+        <option value="price-desc">가격 높은순</option>
+        <option value="rating">별점 높은순</option>
+      </select>
+    </div>
+
+    <!-- 카테고리 필터 탭 (상품에 category 가 있으면 자동 생성) -->
+    <div class="filters" id="filters"></div>
+
+    <div class="result-count" id="result-count"></div>
 
     <!-- 상품 카드가 자동으로 채워지는 영역 -->
     <main class="grid" id="grid"></main>
@@ -33,28 +65,55 @@
     <!-- 렌더링 로직: 이 부분은 수정할 필요 없습니다 -->
     <script>
       (function () {
-        // 설정값 채우기
-        document.title =
-          SITE_CONFIG.siteName + " | " + SITE_CONFIG.tagline;
+        // ── 설정값 채우기 ──
+        document.title = SITE_CONFIG.siteName + " | " + SITE_CONFIG.tagline;
         document.getElementById("site-name").textContent =
           SITE_CONFIG.siteName;
-        document.getElementById("tagline").textContent =
-          SITE_CONFIG.tagline;
+        document.getElementById("tagline").textContent = SITE_CONFIG.tagline;
         document.getElementById("disclosure").textContent =
           SITE_CONFIG.disclosure;
         document.getElementById("footer-note").textContent =
           SITE_CONFIG.disclosure;
 
         var grid = document.getElementById("grid");
+        var filtersEl = document.getElementById("filters");
+        var searchEl = document.getElementById("search");
+        var sortEl = document.getElementById("sort");
+        var countEl = document.getElementById("result-count");
+
+        var allProducts = Array.isArray(PRODUCTS) ? PRODUCTS.slice() : [];
+        var activeCategory = "전체";
+
+        // ── 다크모드: 저장된 설정 복원 ──
+        var toggle = document.getElementById("theme-toggle");
+        var savedTheme = null;
+        try {
+          savedTheme = localStorage.getItem("theme");
+        } catch (e) {}
+        function applyTheme(t) {
+          document.documentElement.setAttribute("data-theme", t);
+          toggle.textContent = t === "dark" ? "☀️" : "🌙";
+        }
+        applyTheme(savedTheme === "dark" ? "dark" : "light");
+        toggle.addEventListener("click", function () {
+          var next =
+            document.documentElement.getAttribute("data-theme") === "dark"
+              ? "light"
+              : "dark";
+          applyTheme(next);
+          try {
+            localStorage.setItem("theme", next);
+          } catch (e) {}
+        });
 
         // 상품이 없을 때
-        if (!Array.isArray(PRODUCTS) || PRODUCTS.length === 0) {
+        if (allProducts.length === 0) {
           grid.innerHTML =
             '<div class="empty">아직 등록된 상품이 없습니다.<br>products.js 파일에 상품을 추가해 주세요.</div>';
           return;
         }
 
-        // HTML 특수문자 이스케이프 (안전하게 텍스트 삽입)
+        // ── 유틸 ──
         function esc(s) {
           if (s == null) return "";
           return String(s)
@@ -63,17 +122,51 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;");
         }
+        // 별점 → 별 문자열 (반올림)
+        function stars(r) {
+          var n = Math.round(Number(r) || 0);
+          if (n < 0) n = 0;
+          if (n > 5) n = 5;
+          return "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
+        }
+        // 정렬용 가격: sortPrice 우선, 없으면 price 에서 숫자 추출
+        function priceOf(p) {
+          if (typeof p.sortPrice === "number") return p.sortPrice;
+          if (p.price) {
+            var num = String(p.price).replace(/[^0-9]/g, "");
+            if (num) return parseInt(num, 10);
+          }
+          return null;
+        }
 
-        // 카드 생성
-        PRODUCTS.forEach(function (p) {
-          if (!p || !p.link) return; // 링크 없는 항목은 건너뜀
+        // ── 카테고리 탭 생성 ──
+        var cats = [];
+        allProducts.forEach(function (p) {
+          if (p.category && cats.indexOf(p.category) === -1)
+            cats.push(p.category);
+        });
+        if (cats.length > 0) {
+          var tabs = ["전체"].concat(cats);
+          tabs.forEach(function (c) {
+            var b = document.createElement("button");
+            b.className = "chip" + (c === "전체" ? " active" : "");
+            b.textContent = c;
+            b.addEventListener("click", function () {
+              activeCategory = c;
+              filtersEl
+                .querySelectorAll(".chip")
+                .forEach(function (x) {
+                  x.classList.remove("active");
+                });
+              b.classList.add("active");
+              render();
+            });
+            filtersEl.appendChild(b);
+          });
+        }
 
-          var a = document.createElement("a");
-          a.className = "card";
-          a.href = p.link;
-          a.target = "_blank";
-          a.rel = "nofollow sponsored noopener"; // 제휴 링크 권장 rel 속성
-
+        // ── 카드 하나 생성 ──
+        function cardHTML(p) {
           var img = p.image
             ? '<img src="' +
               esc(p.image) +
@@ -84,16 +177,31 @@
           var badge = p.badge
             ? '<span class="badge">' + esc(p.badge) + "</span>"
             : "";
+          var catTag = p.category
+            ? '<span class="cat-tag">' + esc(p.category) + "</span>"
+            : "";
           var desc = p.desc
             ? '<div class="desc">' + esc(p.desc) + "</div>"
             : "";
+          var rating =
+            p.rating != null
+              ? '<div class="rating"><span class="stars">' +
+                stars(p.rating) +
+                "</span><span>" +
+                Number(p.rating).toFixed(1) +
+                (p.reviews != null
+                  ? " (" + Number(p.reviews).toLocaleString() + ")"
+                  : "") +
+                "</span></div>"
+              : "";
           var price = p.price
             ? '<div class="price">' + esc(p.price) + "</div>"
             : "";
 
-          a.innerHTML =
+          return (
             '<div class="thumb">' +
             badge +
+            catTag +
             img +
             "</div>" +
             '<div class="body">' +
@@ -101,12 +209,66 @@
             esc(p.title) +
             "</div>" +
             desc +
+            rating +
             price +
             "</div>" +
-            '<div class="cta">쿠팡에서 보기 →</div>';
+            '<div class="cta">쿠팡에서 보기 →</div>'
+          );
+        }
 
-          grid.appendChild(a);
-        });
+        // ── 필터 + 정렬 + 렌더 ──
+        function render() {
+          var q = (searchEl.value || "").trim().toLowerCase();
+          var list = allProducts.filter(function (p) {
+            if (!p || !p.link) return false;
+            if (activeCategory !== "전체" && p.category !== activeCategory)
+              return false;
+            if (q && String(p.title || "").toLowerCase().indexOf(q) === -1)
+              return false;
+            return true;
+          });
+
+          var mode = sortEl.value;
+          if (mode === "price-asc" || mode === "price-desc") {
+            list.sort(function (a, b) {
+              var pa = priceOf(a),
+                pb = priceOf(b);
+              if (pa == null) return 1;
+              if (pb == null) return -1;
+              return mode === "price-asc" ? pa - pb : pb - pa;
+            });
+          } else if (mode === "rating") {
+            list.sort(function (a, b) {
+              return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+            });
+          }
+
+          countEl.textContent = "총 " + list.length + "개 상품";
+
+          if (list.length === 0) {
+            grid.innerHTML =
+              '<div class="empty">조건에 맞는 상품이 없어요.</div>';
+            return;
+          }
+
+          grid.innerHTML = "";
+          list.forEach(function (p, i) {
+            var a = document.createElement("a");
+            a.className = "card";
+            a.href = p.link;
+            a.target = "_blank";
+            a.rel = "nofollow sponsored noopener";
+            a.style.animationDelay = i * 0.05 + "s"; // 순차 페이드인
+            a.innerHTML = cardHTML(p);
+            grid.appendChild(a);
+          });
+        }
+
+        // ── 이벤트 ──
+        searchEl.addEventListener("input", render);
+        sortEl.addEventListener("change", render);
+
+        render();
       })();
     </script>
   </body>
