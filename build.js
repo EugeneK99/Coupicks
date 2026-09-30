@@ -190,7 +190,7 @@ function guidePage(g) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${esc(g.title)} | ${esc(SITE_CONFIG.siteName)}</title>
     <meta name="description" content="${esc(g.intro)}" />
-    <link rel="canonical" href="${url}" />
+    <link rel="canonical" href="${g.blogUrl ? esc(g.blogUrl) : url}" />
     ${gRobots}
     <meta property="og:type" content="article" />
     <meta property="og:title" content="${esc(g.title)}" />
@@ -305,6 +305,33 @@ fs.writeFileSync(
 );
 
 
+
+// 티스토리에 그대로 붙여넣는 "완성 글" HTML (HTML 모드). 인라인 스타일만 사용.
+function tistoryPost(g) {
+  const disc = `<p style="font-size:13px;color:#8a6d00;background:#fff8e1;padding:10px 14px;border-radius:8px;">${esc(SITE_CONFIG.disclosure.replace("이 사이트는", "이 포스팅은"))}</p>`;
+  const cta = (p, label) =>
+    `<p style="text-align:center;margin:12px 0 28px;"><a href="${esc(p.link)}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;padding:12px 24px;background:#ff5722;color:#fff;border-radius:10px;font-weight:700;text-decoration:none;">${label} →</a></p>`;
+  const picks = g.picks
+    .map(
+      (k, i) =>
+        `<h2>${i + 1}. ${esc(k.p.title)}</h2>\n<p>${esc(k.reason).replace(/\n/g, "<br>")}</p>\n${
+          k.p.widget ? `<p style="text-align:center;">${widgetHTML(k.p)}</p>\n` : ""
+        }${cta(k.p, "쿠팡에서 최저가 확인")}`
+    )
+    .join("\n");
+  const faq = g.faq && g.faq.length
+    ? `<h2>자주 묻는 질문</h2>\n` + g.faq.map((f) => `<h3>Q. ${esc(f.q)}</h3>\n<p>${esc(f.a)}</p>`).join("\n")
+    : "";
+  return [
+    disc,
+    `<p>${esc(g.intro)}</p>`,
+    picks,
+    faq,
+    `<p style="font-size:12px;color:#888;">가격·재고는 수시로 변동되므로 쿠팡 상품 페이지에서 확인해 주세요.</p>`,
+    disc,
+  ].filter(Boolean).join("\n");
+}
+
 // ── 티스토리(블로그) 하단용 HTML 스니펫 페이지: blog/index.html ──
 // 글 하단에 붙여넣는 용도. 항상 noindex (검색 노출 불필요).
 const utm = "utm_source=tistory&utm_medium=blog";
@@ -320,6 +347,11 @@ const cats = [];
 items.forEach((p) => p.category && !cats.includes(p.category) && cats.push(p.category));
 
 const snippets = [
+  ...guides.map((g) => ({
+    title: `완성 글 (본문 전체): ${g.title}`,
+    code: tistoryPost(g),
+    tall: true,
+  })),
   { title: "전체 (스킨 하단·기본형)", code: btn(`${BASE}/?${utm}`, "오늘의 추천템 전체 보기") },
   ...guides.map((g) => ({
     title: `가이드: ${g.title}`,
@@ -349,7 +381,7 @@ button{margin-top:8px;padding:8px 16px;border:0;border-radius:8px;background:var
 <p style="color:var(--muted);margin:8px 0 20px">티스토리 편집기를 <b>HTML 모드</b>로 바꾼 뒤 붙여넣으세요. 대가성 문구가 포함되어 있습니다. 링크의 utm 값으로 티스토리 유입을 구분합니다.</p>
 ${snippets
   .map(
-    (s, i) => `<section class="s"><h2>${esc(s.title)}</h2><textarea id="t${i}" readonly>${esc(s.code)}</textarea>
+    (s, i) => `<section class="s"><h2>${esc(s.title)}</h2><textarea id="t${i}" readonly${s.tall ? ' style="height:320px"' : ""}>${esc(s.code)}</textarea>
 <button onclick="navigator.clipboard.writeText(document.getElementById('t${i}').value);this.textContent='복사됨 ✓'">복사</button>
 <div class="pv">${s.code}</div></section>`
   )
