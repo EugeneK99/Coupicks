@@ -469,3 +469,115 @@ footer {
   border-radius: 12px;
   background: #fff;
 }
+
+/* ============================================================
+   전환율/연동 개선용 추가 스타일
+   (블로그 유입 안내 배너, 관련 가이드 배너, 카드 상세 링크)
+   ============================================================ */
+
+/* 블로그에서 넘어왔을 때 뜨는 맥락 안내 배너 */
+.context-bar {
+  max-width: 1100px;
+  margin: 16px auto 0;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 87, 34, 0.1),
+    rgba(255, 138, 80, 0.12)
+  );
+  border: 1px solid rgba(255, 87, 34, 0.25);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.context-bar .ctx-msg {
+  font-weight: 600;
+}
+.context-bar .ctx-reset {
+  margin-left: auto;
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.context-bar .ctx-reset:hover {
+  text-decoration: underline;
+}
+/* .context-bar 는 컨테이너에 max-width 가 있으니 좌우 여백 맞춤 */
+@media (max-width: 1132px) {
+  .context-bar {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+}
+
+/* 관련 가이드로 유도하는 배너 (상단) */
+.guide-banner {
+  max-width: 1100px;
+  margin: 14px auto 0;
+  padding: 0 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.guide-banner a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+}
+.guide-banner a:hover {
+  border-color: var(--brand);
+  transform: translateY(-2px);
+}
+.guide-banner a .g-emoji {
+  font-size: 1.15rem;
+}
+.guide-banner a .g-arrow {
+  color: var(--brand);
+  font-weight: 800;
+}
+
+/* 카드 하단 액션 영역: 쿠팡 버튼 + 상세 보기 링크 */
+.card .actions {
+  margin: 0 15px 15px;
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.card .actions .cta {
+  margin: 0;
+  flex: 1;
+}
+.card .actions .detail-link {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+.card .actions .detail-link:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}

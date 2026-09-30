@@ -55,6 +55,12 @@
       </select>
     </div>
 
+    <!-- 블로그 유입 안내 배너 (딥링크로 들어오면 자동 표시) -->
+    <div class="context-bar" id="context-bar" style="display: none"></div>
+
+    <!-- 관련 가이드 유도 배너 (자동 생성) -->
+    <div class="guide-banner" id="guide-banner"></div>
+
     <!-- 카테고리 필터 탭 (상품에 category 가 있으면 자동 생성) -->
     <div class="filters" id="filters"></div>
 
@@ -72,6 +78,8 @@
 
     <!-- 데이터 파일 먼저 로드 -->
     <script src="products.js"></script>
+    <!-- 가이드 데이터 (없거나 로드 실패해도 사이트는 정상 동작) -->
+    <script src="guides.js" onerror="window.GUIDES=window.GUIDES||[]"></script>
 
     <!-- 렌더링 로직: 이 부분은 수정할 필요 없습니다 -->
     <script>
@@ -156,6 +164,14 @@
         if (params.get("sort")) sortEl.value = params.get("sort");
         var wantCat = params.get("cat");
 
+        // 유입 추적용 utm 파라미터는 상세 페이지 이동 시 그대로 넘겨준다
+        // (쿠팡 링크에는 붙이지 않음: 링크 변형은 파트너스 정책상 위험)
+        var utmKeep = [];
+        ["utm_source", "utm_medium", "utm_campaign"].forEach(function (k) {
+          if (params.get(k)) utmKeep.push(k + "=" + encodeURIComponent(params.get(k)));
+        });
+        var detailQuery = utmKeep.length ? "?" + utmKeep.join("&") : "";
+
         // ── 카테고리 탭 생성 ──
         var cats = [];
         allProducts.forEach(function (p) {
@@ -190,6 +206,67 @@
           });
         }
 
+        // ── ③ 블로그 유입 안내 배너 ──
+        // 티스토리 등에서 딥링크(?cat= / ?q= / utm_source=tistory)로 넘어온 경우,
+        // "지금 무엇을 보고 있는지" 알려주고 전체 보기로 되돌아갈 길을 준다.
+        (function showContextBar() {
+          var bar = document.getElementById("context-bar");
+          var fromBlog = params.get("utm_source") || wantCat || params.get("q");
+          if (!fromBlog) return;
+          var msg = "";
+          if (activeCategory !== "전체") {
+            msg = "🎯 '" + activeCategory + "' 관련 추천템만 보고 있어요";
+          } else if (params.get("q")) {
+            msg = "🔍 '" + params.get("q") + "' 검색 결과를 보고 있어요";
+          } else {
+            msg = "👋 블로그에서 오셨네요! 추천템을 모아뒀어요";
+          }
+          bar.innerHTML =
+            '<span class="ctx-msg">' +
+            esc(msg) +
+            '</span><a class="ctx-reset" href="./">전체 보기 →</a>';
+          bar.style.display = "flex";
+        })();
+
+        // ── ③ 관련 가이드 유도 배너 ──
+        // guides.js 의 GUIDES 중, 현재 카테고리 상품을 포함하는 가이드를 상단에 노출.
+        (function showGuideBanner() {
+          var wrap = document.getElementById("guide-banner");
+          var guides = Array.isArray(window.GUIDES) ? window.GUIDES : [];
+          if (!guides.length) return;
+
+          // 현재 활성 카테고리에 속한 상품 slug 집합
+          var activeSlugs = {};
+          allProducts.forEach(function (p) {
+            if (activeCategory === "전체" || p.category === activeCategory) {
+              if (p.slug) activeSlugs[p.slug] = true;
+            }
+          });
+
+          var shown = guides.filter(function (g) {
+            if (!g || !g.slug || !g.picks) return false;
+            return g.picks.some(function (k) {
+              return activeSlugs[k.slug];
+            });
+          });
+          // 전체 보기일 땐 최대 2개만
+          if (activeCategory === "전체") shown = shown.slice(0, 2);
+
+          wrap.innerHTML = shown
+            .map(function (g) {
+              return (
+                '<a href="g/' +
+                esc(g.slug) +
+                "/" +
+                detailQuery +
+                '"><span class="g-emoji">📖</span><span>' +
+                esc(g.title) +
+                '</span><span class="g-arrow">→</span></a>'
+              );
+            })
+            .join("");
+        })();
+
         // ── 카드 하나 생성 ──
         function cardHTML(p) {
           var img = p.image
@@ -223,6 +300,16 @@
             ? '<div class="price">' + esc(p.price) + "</div>"
             : "";
 
+          // 상세 페이지(p/slug/)가 있으면 "상세·후기" 링크 노출
+          var detail =
+            p.slug && (p.review || p.rating != null)
+              ? '<a class="detail-link" href="p/' +
+                esc(p.slug) +
+                "/" +
+                detailQuery +
+                '">ⓘ 후기</a>'
+              : "";
+
           return (
             '<div class="thumb">' +
             badge +
@@ -237,7 +324,10 @@
             rating +
             price +
             "</div>" +
-            '<div class="cta">쿠팡에서 최저가 확인 →</div>'
+            '<div class="actions">' +
+            '<span class="cta">쿠팡에서 최저가 확인 →</span>' +
+            detail +
+            "</div>"
           );
         }
 
@@ -278,14 +368,28 @@
 
           grid.innerHTML = "";
           list.forEach(function (p, i) {
-            var a = document.createElement("a");
-            a.className = "card";
-            a.href = p.link;
-            a.target = "_blank";
-            a.rel = "nofollow sponsored noopener";
-            a.style.animationDelay = i * 0.05 + "s"; // 순차 페이드인
-            a.innerHTML = cardHTML(p);
-            grid.appendChild(a);
+            // 카드는 div (내부에 상세 링크 <a> 가 들어가므로 중첩 <a> 방지)
+            var card = document.createElement("div");
+            card.className = "card";
+            card.style.animationDelay = i * 0.05 + "s"; // 순차 페이드인
+            card.innerHTML = cardHTML(p);
+
+            // 카드 본체(쿠팡 이동)를 감싸는 링크: 썸네일·본문·CTA 영역
+            var open = function () {
+              window.open(p.link, "_blank", "noopener");
+            };
+            ["thumb", "body", "actions"].forEach(function (cls) {
+              var el = card.querySelector("." + cls);
+              if (!el) return;
+              // actions 내부의 상세 링크는 제외 (자체 이동)
+              el.style.cursor = "pointer";
+              el.addEventListener("click", function (e) {
+                if (e.target.closest(".detail-link")) return; // 상세 링크는 통과
+                open();
+              });
+            });
+
+            grid.appendChild(card);
           });
         }
 
