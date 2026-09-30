@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- SEO 기본 태그: 검색 노출에 도움됨. products.js 의 SITE_CONFIG 값으로 아래도 맞춰주면 좋습니다 -->
+    <title>오늘의 추천템 | 가성비 아이템 모음</title>
+    <meta
+      name="description"
+      content="직접 고른 가성비 좋은 상품들을 한눈에 모아봤습니다."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- 대가성 고지 (자동 삽입) -->
+    <div class="disclosure" id="disclosure"></div>
+
+    <header>
+      <h1 id="site-name"></h1>
+      <p id="tagline"></p>
+    </header>
+
+    <!-- 상품 카드가 자동으로 채워지는 영역 -->
+    <main class="grid" id="grid"></main>
+
+    <footer>
+      <p id="footer-note"></p>
+    </footer>
+
+    <!-- 데이터 파일 먼저 로드 -->
+    <script src="products.js"></script>
+
+    <!-- 렌더링 로직: 이 부분은 수정할 필요 없습니다 -->
+    <script>
+      (function () {
+        // 설정값 채우기
+        document.title =
+          SITE_CONFIG.siteName + " | " + SITE_CONFIG.tagline;
+        document.getElementById("site-name").textContent =
+          SITE_CONFIG.siteName;
+        document.getElementById("tagline").textContent =
+          SITE_CONFIG.tagline;
+        document.getElementById("disclosure").textContent =
+          SITE_CONFIG.disclosure;
+        document.getElementById("footer-note").textContent =
+          SITE_CONFIG.disclosure;
+
+        var grid = document.getElementById("grid");
+
+        // 상품이 없을 때
+        if (!Array.isArray(PRODUCTS) || PRODUCTS.length === 0) {
+          grid.innerHTML =
+            '<div class="empty">아직 등록된 상품이 없습니다.<br>products.js 파일에 상품을 추가해 주세요.</div>';
+          return;
+        }
+
+        // HTML 특수문자 이스케이프 (안전하게 텍스트 삽입)
+        function esc(s) {
+          if (s == null) return "";
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        // 카드 생성
+        PRODUCTS.forEach(function (p) {
+          if (!p || !p.link) return; // 링크 없는 항목은 건너뜀
+
+          var a = document.createElement("a");
+          a.className = "card";
+          a.href = p.link;
+          a.target = "_blank";
+          a.rel = "nofollow sponsored noopener"; // 제휴 링크 권장 rel 속성
+
+          var img = p.image
+            ? '<img src="' +
+              esc(p.image) +
+              '" alt="' +
+              esc(p.title) +
+              '" loading="lazy" />'
+            : "";
+          var badge = p.badge
+            ? '<span class="badge">' + esc(p.badge) + "</span>"
+            : "";
+          var desc = p.desc
+            ? '<div class="desc">' + esc(p.desc) + "</div>"
+            : "";
+          var price = p.price
+            ? '<div class="price">' + esc(p.price) + "</div>"
+            : "";
+
+          a.innerHTML =
+            '<div class="thumb">' +
+            badge +
+            img +
+            "</div>" +
+            '<div class="body">' +
+            '<div class="name">' +
+            esc(p.title) +
+            "</div>" +
+            desc +
+            price +
+            "</div>" +
+            '<div class="cta">쿠팡에서 보기 →</div>';
+
+          grid.appendChild(a);
+        });
+      })();
+    </script>
+  </body>
+</html>

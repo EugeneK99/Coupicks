@@ -1,0 +1,161 @@
+/* ============================================================
+   디자인 파일 ── 색/글꼴 등 꾸미기를 바꾸고 싶을 때만 수정
+   (상품 추가는 products.js 에서 합니다)
+   ============================================================ */
+
+:root {
+  --brand: #ff5722;
+  --bg: #f7f7f8;
+  --card-bg: #ffffff;
+  --text: #222;
+  --muted: #777;
+  --border: #eaeaea;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ── 상단 헤더 ── */
+header {
+  background: var(--card-bg);
+  padding: 28px 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+  font-size: 1.6rem;
+  color: var(--brand);
+}
+
+header p {
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+/* ── 대가성 고지 배너 (필수 표시) ── */
+.disclosure {
+  background: #fff8e1;
+  color: #8a6d00;
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f0e6c0;
+}
+
+/* ── 상품 그리드 ── */
+.grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 18px;
+}
+
+/* ── 상품 카드 ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.card .thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: #eee;
+  overflow: hidden;
+}
+
+.card .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card .badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+}
+
+.card .body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.card .body .name {
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+
+.card .body .desc {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.card .body .price {
+  margin-top: auto;
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.card .cta {
+  margin: 0 14px 14px;
+  text-align: center;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+/* ── 하단 ── */
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 24px 16px 40px;
+}
+
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--muted);
+  padding: 60px 20px;
+}
