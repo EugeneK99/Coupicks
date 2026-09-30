@@ -182,6 +182,56 @@ fs.writeFileSync(
     : `User-agent: *\nAllow: /\nSitemap: ${BASE}/sitemap.xml\n`
 );
 
+
+// ── 티스토리(블로그) 하단용 HTML 스니펫 페이지: blog/index.html ──
+// 글 하단에 붙여넣는 용도. 항상 noindex (검색 노출 불필요).
+const utm = "utm_source=tistory&utm_medium=blog";
+const btn = (href, label) =>
+  `<p style="text-align:center;margin:24px 0 8px;">\n` +
+  `  <a href="${href}" target="_blank" rel="nofollow sponsored noopener"\n` +
+  `     style="display:inline-block;padding:12px 24px;background:#ff5722;color:#fff;border-radius:10px;font-weight:700;text-decoration:none;">\n` +
+  `    ${label} →\n  </a>\n</p>\n` +
+  `<p style="font-size:12px;color:#888;text-align:center;margin:0 0 24px;">\n` +
+  `  ${esc(SITE_CONFIG.disclosure)}\n</p>`;
+
+const cats = [];
+items.forEach((p) => p.category && !cats.includes(p.category) && cats.push(p.category));
+
+const snippets = [
+  { title: "전체 (스킨 하단·기본형)", code: btn(`${BASE}/?${utm}`, "오늘의 추천템 전체 보기") },
+  ...cats.map((c) => ({
+    title: `카테고리: ${c}`,
+    code: btn(`${BASE}/?cat=${encodeURIComponent(c)}&${utm}`, `${esc(c)} 추천템 보기`),
+  })),
+  ...items.map((p) => ({
+    title: `상품: ${p.title}`,
+    code: btn(`${BASE}/p/${p.slug}/?${utm}`, `${esc(p.title)} 자세히 보기`),
+  })),
+];
+
+fs.mkdirSync(path.join(ROOT, "blog"), { recursive: true });
+fs.writeFileSync(
+  path.join(ROOT, "blog", "index.html"),
+  `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" /><title>티스토리 하단 템플릿</title>
+<link rel="stylesheet" href="../styles.css" />
+<style>.wrap{max-width:720px;margin:0 auto;padding:24px 16px}.s{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.s h2{font-size:1rem;margin-bottom:8px}textarea{width:100%;height:150px;font:12px/1.4 monospace;border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--bg);color:var(--text)}
+button{margin-top:8px;padding:8px 16px;border:0;border-radius:8px;background:var(--brand);color:#fff;font-weight:700;cursor:pointer}.pv{margin-top:12px}</style></head>
+<body><div class="wrap"><h1>티스토리 하단 템플릿</h1>
+<p style="color:var(--muted);margin:8px 0 20px">티스토리 편집기를 <b>HTML 모드</b>로 바꾼 뒤 붙여넣으세요. 대가성 문구가 포함되어 있습니다. 링크의 utm 값으로 티스토리 유입을 구분합니다.</p>
+${snippets
+  .map(
+    (s, i) => `<section class="s"><h2>${esc(s.title)}</h2><textarea id="t${i}" readonly>${esc(s.code)}</textarea>
+<button onclick="navigator.clipboard.writeText(document.getElementById('t${i}').value);this.textContent='복사됨 ✓'">복사</button>
+<div class="pv">${s.code}</div></section>`
+  )
+  .join("\n")}
+</div></body></html>
+`
+);
+
 console.log(
   `빌드 완료: 상품 ${items.length}개, 상세 페이지 ${items.length}개` +
     (hasPlaceholder ? "\n⚠ 더미(EXAMPLE) 링크 감지 → noindex 및 robots Disallow 적용됨" : "")
