@@ -7,6 +7,8 @@
 //  건드릴 필요가 없습니다.
 //
 //  각 항목 설명:
+//   - widget   : 쿠팡파트너스 다이나믹 배너 주소 (선택, 예: "coupa.ng/cpOiiO").
+//                이미지·가격이 쿠팡에서 자동 갱신됨. widgetHeight 로 높이(px) 조절
 //   - slug     : 상품 상세 페이지 주소용 영문 id (권장, 예: "cordless-vacuum")
 //   - title    : 상품 이름 (필수)
 //   - link     : 쿠팡파트너스에서 생성한 "내 제휴 링크" (필수)
@@ -29,7 +31,8 @@
 const PRODUCTS = [
   {
     slug: "bluetooth-speaker",
-    title: "블루투스 스피커",
+    widget: "coupa.ng/cpOiiO",
+    title: "브리츠 BZ-TX11 블루투스 스피커 (화이트)",
     link: "https://link.coupang.com/a/hrDCk4WEMu",
     image: "",
     desc: "집에서 노래를 크게 틀고 싶을 때 쓰는 블루투스 스피커",
@@ -40,7 +43,8 @@ const PRODUCTS = [
   },
   {
     slug: "daily-headphone",
-    title: "데일리 헤드폰",
+    widget: "coupa.ng/cpOimb",
+    title: "소니 WH-CH520 블루투스 헤드폰 (화이트)",
     link: "https://link.coupang.com/a/hrDIjVXVim",
     image: "",
     desc: "강한 비트의 곡을 제대로 듣기 좋은 데일리 헤드폰",
@@ -51,7 +55,8 @@ const PRODUCTS = [
   },
   {
     slug: "nc-earphone",
-    title: "노이즈캔슬링 이어폰",
+    widget: "coupa.ng/cpOieh",
+    title: "QCY HT19 MeloB 노이즈캔슬링 블루투스 이어폰 (블랙)",
     link: "https://link.coupang.com/a/hrDtRdrFqC",
     image: "",
     desc: "잔잔하고 섬세한 곡을 조용하게 듣기 좋은 노이즈캔슬링 이어폰",

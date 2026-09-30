@@ -50,6 +50,18 @@ items.forEach((p) => {
 
 const ogImage = (p) => (p && p.image) || "";
 
+
+// 쿠팡파트너스 다이나믹 배너(위젯) iframe. products.js 의 widget: "coupa.ng/xxxx" (또는 전체 URL)
+function widgetHTML(p) {
+  if (!p.widget) return "";
+  const raw = String(p.widget).trim();
+  const src = /^https?:\/\//.test(raw) ? raw : "https://" + raw;
+  if (!/^https:\/\/(coupa\.ng|ads-partners\.coupang\.com|partners\.coupangcdn\.com)\//.test(src))
+    throw new Error(`상품 ${p.slug}: widget 은 쿠팡 위젯 주소여야 합니다: ${raw}`);
+  const h = Number(p.widgetHeight) || 220;
+  return `<iframe class="widget" src="${esc(src)}" title="${esc(p.title)} 쿠팡 상품 정보" width="100%" height="${h}" frameborder="0" scrolling="no" referrerpolicy="unsafe-url" loading="lazy"></iframe>`;
+}
+
 // ── 상품 상세 페이지 ──
 function productPage(p) {
   const url = `${BASE}/p/${p.slug}/`;
@@ -110,6 +122,7 @@ function productPage(p) {
         ${rating}
         ${price}
         ${p.review ? `<div class="review">${esc(p.review).replace(/\n/g, "<br>")}</div>` : ""}
+        ${widgetHTML(p)}
         <a class="buy" href="${esc(p.link)}" target="_blank" rel="nofollow sponsored noopener">쿠팡에서 최저가 확인 →</a>
         <p class="note">${esc(SITE_CONFIG.disclosure)}<br>가격·재고는 수시로 변동되므로 쿠팡 상품 페이지에서 확인해 주세요.</p>
       </article>
@@ -200,6 +213,7 @@ function guidePage(g) {
         <h2>${i + 1}. ${esc(k.p.title)}</h2>
         ${k.p.image ? `<img class="hero" src="${esc(k.p.image)}" alt="${esc(k.p.title)}" loading="lazy" />` : ""}
         <p>${esc(k.reason).replace(/\n/g, "<br>")}</p>
+        ${widgetHTML(k.p)}
         <a class="buy" href="${esc(k.p.link)}" target="_blank" rel="nofollow sponsored noopener">쿠팡에서 최저가 확인 →</a>
       </section>`
         )

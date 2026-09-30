@@ -458,3 +458,14 @@ footer {
   cursor: pointer;
   font-weight: 600;
 }
+
+/* 쿠팡 위젯 */
+.detail .widget {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  margin: 12px auto 0;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+}
