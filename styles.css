@@ -424,3 +424,37 @@ footer {
 .seo-list a {
   color: var(--muted);
 }
+
+/* ── 가이드 페이지 ── */
+.detail .pick {
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  margin-top: 24px;
+}
+.detail .pick h2,
+.detail > h2 {
+  font-size: 1.15rem;
+  margin: 0 0 12px;
+}
+.detail .cmp {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 0.85rem;
+}
+.detail .cmp th,
+.detail .cmp td {
+  border: 1px solid var(--border);
+  padding: 8px;
+  text-align: left;
+}
+.detail details {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.detail summary {
+  cursor: pointer;
+  font-weight: 600;
+}

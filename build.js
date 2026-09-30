@@ -12,6 +12,13 @@ const src = fs.readFileSync(path.join(ROOT, "products.js"), "utf8");
 const ctx = {};
 vm.runInNewContext(src + "\n;this.PRODUCTS=PRODUCTS;this.SITE_CONFIG=SITE_CONFIG;", ctx);
 const { PRODUCTS, SITE_CONFIG } = ctx;
+const gctx = {};
+const gpath = path.join(ROOT, "guides.js");
+vm.runInNewContext(
+  (fs.existsSync(gpath) ? fs.readFileSync(gpath, "utf8") : "const GUIDES=[];") + "\n;this.GUIDES=GUIDES;",
+  gctx
+);
+const GUIDES = gctx.GUIDES || [];
 
 const BASE = String(SITE_CONFIG.siteUrl || "").replace(/\/$/, "");
 if (!BASE) throw new Error("SITE_CONFIG.siteUrl 이 필요합니다.");
@@ -118,6 +125,106 @@ for (const p of items) {
   fs.writeFileSync(path.join(dir, "index.html"), productPage(p));
 }
 
+
+// ── 가이드 페이지 (g/<slug>/) ──
+const bySlug = Object.fromEntries(items.map((p) => [p.slug, p]));
+const guides = GUIDES.filter((g) => g && g.slug && g.title).map((g) => {
+  const picks = (g.picks || []).map((k) => {
+    if (!bySlug[k.slug]) throw new Error(`가이드 ${g.slug}: 없는 상품 slug "${k.slug}"`);
+    return { ...k, p: bySlug[k.slug] };
+  });
+  return { ...g, picks };
+});
+
+function guidePage(g) {
+  const url = `${BASE}/g/${g.slug}/`;
+  const ld = [
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: g.title,
+      itemListElement: g.picks.map((k, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${BASE}/p/${k.p.slug}/`,
+        name: k.p.title,
+      })),
+    },
+    ...(g.faq && g.faq.length
+      ? [
+          {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: g.faq.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          },
+        ]
+      : []),
+  ];
+  const gRobots = hasPlaceholder || g.picks.some((k) => isPlaceholder(k.p)) ? '<meta name="robots" content="noindex, nofollow" />' : "";
+  const table = g.compare && g.compare.length
+    ? `<table class="cmp"><thead><tr><th></th>${g.picks.map((k) => `<th>${esc(k.p.title)}</th>`).join("")}</tr></thead><tbody>${g.compare
+        .map((r) => `<tr><th>${esc(r.label)}</th>${g.picks.map((k) => `<td>${esc((r.values || {})[k.p.slug] || "-")}</td>`).join("")}</tr>`)
+        .join("")}</tbody></table>`
+    : "";
+  return `<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${esc(g.title)} | ${esc(SITE_CONFIG.siteName)}</title>
+    <meta name="description" content="${esc(g.intro)}" />
+    <link rel="canonical" href="${url}" />
+    ${gRobots}
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="${esc(g.title)}" />
+    <meta property="og:description" content="${esc(g.intro)}" />
+    <meta property="og:url" content="${url}" />
+    ${ld.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, "\\u003c")}</script>`).join("\n    ")}
+    <link rel="stylesheet" href="../../styles.css" />
+    <script>try{if(localStorage.getItem("theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
+  </head>
+  <body>
+    <div class="disclosure">${esc(SITE_CONFIG.disclosure)}</div>
+    <main class="detail">
+      <a class="back" href="../../">← ${esc(SITE_CONFIG.siteName)} 전체 보기</a>
+      <h1>${esc(g.title)}</h1>
+      <p class="lead">${esc(g.intro)}</p>
+      ${table}
+      ${g.picks
+        .map(
+          (k, i) => `<section class="pick">
+        <h2>${i + 1}. ${esc(k.p.title)}</h2>
+        ${k.p.image ? `<img class="hero" src="${esc(k.p.image)}" alt="${esc(k.p.title)}" loading="lazy" />` : ""}
+        <p>${esc(k.reason).replace(/\n/g, "<br>")}</p>
+        <a class="buy" href="${esc(k.p.link)}" target="_blank" rel="nofollow sponsored noopener">쿠팡에서 최저가 확인 →</a>
+      </section>`
+        )
+        .join("\n      ")}
+      ${g.faq && g.faq.length ? `<h2>자주 묻는 질문</h2>` + g.faq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("") : ""}
+      <p class="note">${esc(SITE_CONFIG.disclosure)}<br>가격·재고는 수시로 변동되므로 쿠팡 상품 페이지에서 확인해 주세요.</p>
+    </main>
+  </body>
+</html>
+`;
+}
+
+const gSlugs = new Set(guides.map((g) => g.slug));
+for (const g of guides) {
+  const dir = path.join(ROOT, "g", g.slug);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "index.html"), guidePage(g));
+}
+const gDir = path.join(ROOT, "g");
+if (fs.existsSync(gDir)) {
+  for (const d of fs.readdirSync(gDir)) {
+    if (!gSlugs.has(d)) fs.rmSync(path.join(gDir, d), { recursive: true, force: true });
+  }
+}
+
 // 삭제된 상품의 옛 페이지 정리
 const pDir = path.join(ROOT, "p");
 if (fs.existsSync(pDir)) {
@@ -152,9 +259,10 @@ const head = [
   .filter(Boolean)
   .join("\n    ");
 
-const links = `<nav class="seo-list" aria-label="상품 상세">${items
-  .map((p) => `<a href="p/${p.slug}/">${esc(p.title)}</a>`)
-  .join("")}</nav>`;
+const links = `<nav class="seo-list" aria-label="상품 상세">${[
+  ...guides.map((g) => `<a href="g/${g.slug}/">${esc(g.title)}</a>`),
+  ...items.map((p) => `<a href="p/${p.slug}/">${esc(p.title)}</a>`),
+].join("")}</nav>`;
 
 let html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
 const swap = (name, body) => {
@@ -168,7 +276,7 @@ fs.writeFileSync(path.join(ROOT, "index.html"), html);
 
 // ── sitemap / robots ──
 const today = new Date().toISOString().slice(0, 10);
-const urls = [`${BASE}/`, ...items.map((p) => `${BASE}/p/${p.slug}/`)];
+const urls = [`${BASE}/`, ...guides.map((g) => `${BASE}/g/${g.slug}/`), ...items.map((p) => `${BASE}/p/${p.slug}/`)];
 fs.writeFileSync(
   path.join(ROOT, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
@@ -199,6 +307,10 @@ items.forEach((p) => p.category && !cats.includes(p.category) && cats.push(p.cat
 
 const snippets = [
   { title: "전체 (스킨 하단·기본형)", code: btn(`${BASE}/?${utm}`, "오늘의 추천템 전체 보기") },
+  ...guides.map((g) => ({
+    title: `가이드: ${g.title}`,
+    code: btn(`${BASE}/g/${g.slug}/?${utm}`, "추천 TOP 자세히 보기"),
+  })),
   ...cats.map((c) => ({
     title: `카테고리: ${c}`,
     code: btn(`${BASE}/?cat=${encodeURIComponent(c)}&${utm}`, `${esc(c)} 추천템 보기`),
@@ -233,6 +345,6 @@ ${snippets
 );
 
 console.log(
-  `빌드 완료: 상품 ${items.length}개, 상세 페이지 ${items.length}개` +
+  `빌드 완료: 상품 ${items.length}개, 상세 페이지 ${items.length}개, 가이드 ${guides.length}개` +
     (hasPlaceholder ? "\n⚠ 더미(EXAMPLE) 링크 감지 → noindex 및 robots Disallow 적용됨" : "")
 );
