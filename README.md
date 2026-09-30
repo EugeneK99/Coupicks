@@ -72,3 +72,23 @@
 쿠팡파트너스 실적이 쌓이면 **오픈 API** 승인을 받아 상품을 자동으로 불러올 수 있습니다.
 그때는 API 키를 코드에 직접 넣지 말고, 서버(또는 서버리스 함수)에서 환경변수로 처리해야 합니다.
 (API 키는 절대 이 프론트엔드 파일이나 GitHub에 올리면 안 됩니다.)
+
+## 🏗️ 빌드 (SEO 정적 페이지 생성)
+
+`products.js` 를 수정한 뒤 반드시 실행하세요. 의존성 없음(Node 18+).
+
+```bash
+node build.js
+```
+
+- `p/<slug>/index.html` 상품 상세 페이지, `sitemap.xml`, `robots.txt`, index.html 의 SEO 태그를 자동 생성합니다.
+- 더미(`EXAMPLE`) 링크가 남아 있으면 **자동으로 noindex/Disallow** 처리됩니다. 실제 링크로 모두 바꾸면 색인이 열립니다.
+- `review` 필드에 추천 이유를 쓰면 상세 페이지 본문이 됩니다.
+
+## 📝 블로그 글에 붙이는 딥링크
+
+```
+https://eugenek99.github.io/Coupicks/?cat=주방
+https://eugenek99.github.io/Coupicks/?q=키보드&sort=rating
+https://eugenek99.github.io/Coupicks/p/tumbler-500ml/
+```

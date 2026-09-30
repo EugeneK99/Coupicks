@@ -9,6 +9,16 @@
       name="description"
       content="직접 고른 가성비 좋은 상품들을 한눈에 모아봤습니다."
     />
+    <!--BUILD:HEAD-->
+    <link rel="canonical" href="https://eugenek99.github.io/Coupicks/" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="오늘의 추천템" />
+    <meta property="og:description" content="가성비 기준으로 골라 모은 아이템 모음" />
+    <meta property="og:url" content="https://eugenek99.github.io/Coupicks/" />
+    <meta property="og:image" content="https://placehold.co/400x400?text=Product+1" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"오늘의 추천템","itemListElement":[{"@type":"ListItem","position":1,"url":"https://eugenek99.github.io/Coupicks/p/cordless-vacuum/","name":"예시 무선 청소기 (샘플)"},{"@type":"ListItem","position":2,"url":"https://eugenek99.github.io/Coupicks/p/bluetooth-earbuds/","name":"예시 블루투스 이어폰 (샘플)"},{"@type":"ListItem","position":3,"url":"https://eugenek99.github.io/Coupicks/p/tumbler-500ml/","name":"예시 텀블러 500ml (샘플)"},{"@type":"ListItem","position":4,"url":"https://eugenek99.github.io/Coupicks/p/mechanical-keyboard/","name":"예시 기계식 키보드 (샘플)"}]}</script>
+    <!--/BUILD:HEAD-->
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -56,6 +66,9 @@
     <main class="grid" id="grid"></main>
 
     <footer>
+      <!--BUILD:LINKS-->
+    <nav class="seo-list" aria-label="상품 상세"><a href="p/cordless-vacuum/">예시 무선 청소기 (샘플)</a><a href="p/bluetooth-earbuds/">예시 블루투스 이어폰 (샘플)</a><a href="p/tumbler-500ml/">예시 텀블러 500ml (샘플)</a><a href="p/mechanical-keyboard/">예시 기계식 키보드 (샘플)</a></nav>
+    <!--/BUILD:LINKS-->
       <p id="footer-note"></p>
     </footer>
 
@@ -139,6 +152,12 @@
           return null;
         }
 
+        // ── 블로그 등 외부 글에서 딥링크: ?cat=주방 &q=키보드 &sort=rating ──
+        var params = new URLSearchParams(location.search);
+        if (params.get("q")) searchEl.value = params.get("q");
+        if (params.get("sort")) sortEl.value = params.get("sort");
+        var wantCat = params.get("cat");
+
         // ── 카테고리 탭 생성 ──
         var cats = [];
         allProducts.forEach(function (p) {
@@ -162,6 +181,14 @@
               render();
             });
             filtersEl.appendChild(b);
+          });
+        }
+
+        // 딥링크로 지정한 카테고리가 실제 존재하면 적용
+        if (wantCat && cats.indexOf(wantCat) !== -1) {
+          activeCategory = wantCat;
+          filtersEl.querySelectorAll(".chip").forEach(function (x) {
+            x.classList.toggle("active", x.textContent === wantCat);
           });
         }
 
@@ -194,7 +221,7 @@
                   : "") +
                 "</span></div>"
               : "";
-          var price = p.price
+          var price = p.price && SITE_CONFIG.showPrice
             ? '<div class="price">' + esc(p.price) + "</div>"
             : "";
 
@@ -212,7 +239,7 @@
             rating +
             price +
             "</div>" +
-            '<div class="cta">쿠팡에서 보기 →</div>'
+            '<div class="cta">쿠팡에서 최저가 확인 →</div>'
           );
         }
 

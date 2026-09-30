@@ -7,6 +7,7 @@
 //  건드릴 필요가 없습니다.
 //
 //  각 항목 설명:
+//   - slug     : 상품 상세 페이지 주소용 영문 id (권장, 예: "cordless-vacuum")
 //   - title    : 상품 이름 (필수)
 //   - link     : 쿠팡파트너스에서 생성한 "내 제휴 링크" (필수)
 //                예: https://link.coupang.com/a/XXXXXX
@@ -18,6 +19,7 @@
 //                예: "가전", "패션", "주방"
 //   - rating   : 별점 (선택, 0~5 숫자. 예: 4.5)
 //   - reviews  : 후기 수 (선택, 숫자. 예: 1280)
+//   - review   : 추천 이유/상세 설명 (선택). 상세 페이지 본문이 되어 SEO에 도움됨
 //   - sortPrice: 정렬용 숫자 가격 (선택, 예: 129000). 넣으면 가격순 정렬 정확해짐
 //
 //  ⚠️ 아래는 전부 "예시(더미) 데이터"입니다.
@@ -26,6 +28,7 @@
 
 const PRODUCTS = [
   {
+    slug: "cordless-vacuum",
     title: "예시 무선 청소기 (샘플)",
     link: "https://link.coupang.com/a/EXAMPLE1",
     image: "https://placehold.co/400x400?text=Product+1",
@@ -38,6 +41,7 @@ const PRODUCTS = [
     reviews: 1280,
   },
   {
+    slug: "bluetooth-earbuds",
     title: "예시 블루투스 이어폰 (샘플)",
     link: "https://link.coupang.com/a/EXAMPLE2",
     image: "https://placehold.co/400x400?text=Product+2",
@@ -50,6 +54,7 @@ const PRODUCTS = [
     reviews: 860,
   },
   {
+    slug: "tumbler-500ml",
     title: "예시 텀블러 500ml (샘플)",
     link: "https://link.coupang.com/a/EXAMPLE3",
     image: "https://placehold.co/400x400?text=Product+3",
@@ -62,6 +67,7 @@ const PRODUCTS = [
     reviews: 2130,
   },
   {
+    slug: "mechanical-keyboard",
     title: "예시 기계식 키보드 (샘플)",
     link: "https://link.coupang.com/a/EXAMPLE4",
     image: "https://placehold.co/400x400?text=Product+4",
@@ -78,7 +84,11 @@ const PRODUCTS = [
 // ── 사이트 설정 (제목/소개문구 바꾸고 싶을 때 여기 수정) ──
 const SITE_CONFIG = {
   siteName: "오늘의 추천템",
-  tagline: "직접 써보고 고른 가성비 아이템 모음",
+  tagline: "가성비 기준으로 골라 모은 아이템 모음",
+  // 배포 주소 (sitemap/OG에 사용, 끝에 / 없이)
+  siteUrl: "https://eugenek99.github.io/Coupicks",
+  // 가격은 수시로 바뀌므로 기본은 숨김(약관/오표기 방지). true 로 바꾸면 표시
+  showPrice: false,
   // 대가성 고지 문구 (쿠팡파트너스 약관 + 공정위 지침상 필수)
   disclosure:
     "이 사이트는 쿠팡파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.",

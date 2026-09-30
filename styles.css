@@ -348,3 +348,79 @@ footer {
     font-size: 1.6rem;
   }
 }
+
+/* ── 상품 상세 페이지 (build.js 가 생성) ── */
+.detail {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+.detail .back {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.detail h1 {
+  font-size: 1.5rem;
+  margin: 8px 0 16px;
+}
+.detail .hero {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.detail .lead {
+  font-size: 1.05rem;
+  margin-bottom: 12px;
+}
+.detail .rating {
+  display: flex;
+  gap: 6px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.detail .rating .stars {
+  color: #f5a623;
+}
+.detail .review {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+}
+.detail .cat-tag.static {
+  position: static;
+  display: inline-block;
+}
+.detail .buy {
+  display: block;
+  text-align: center;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  margin: 20px 0 12px;
+}
+.detail .note {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* 크롤러용 상세 링크 목록 (사람에게는 조용히 표시) */
+.seo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  justify-content: center;
+  padding: 16px;
+  font-size: 0.8rem;
+}
+.seo-list a {
+  color: var(--muted);
+}
