@@ -92,3 +92,11 @@ https://eugenek99.github.io/Coupicks/?cat=주방
 https://eugenek99.github.io/Coupicks/?q=키보드&sort=rating
 https://eugenek99.github.io/Coupicks/p/tumbler-500ml/
 ```
+
+## 공개·비공개 저장소 분리
+
+이 저장소는 Coupicks 사이트 코드·상품 데이터·생성 페이지를 관리한다. Threads 발행 코드·원고·게시 기록·운영 문서는 비공개 [salraemallae-ops](https://github.com/EugeneK99/salraemallae-ops)에서 관리한다(소유자 접근 필요).
+
+운영 저장소의 초기 이관 PR을 먼저 병합한 후 이 저장소의 제거 PR을 병합한다. 운영 저장소는 paused=true이며 발행·토큰 갱신은 수동 실행만 가능하다. Secrets 등록·연결 검증과 사용자 명시 요청 전에는 활성화하지 않는다. 공개 저장소의 과거 이력은 유지한다.
+
+사이트 빌드: `node build.js`. 운영 테스트: 비공개 저장소에서 `node --test automation/*.test.mjs`.
