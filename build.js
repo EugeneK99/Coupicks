@@ -123,7 +123,7 @@ function productPage(p) {
         ${price}
         ${p.review ? `<div class="review">${esc(p.review).replace(/\n/g, "<br>")}</div>` : ""}
         ${widgetHTML(p)}
-        <a class="buy" href="${esc(p.link)}" target="_blank" rel="nofollow sponsored noopener">쿠팡에서 최저가 확인 →</a>
+        <a class="buy" href="${esc(p.link)}" target="_blank" rel="nofollow sponsored noopener">쿠팡에서 가격 확인 →</a>
         <p class="note">${esc(SITE_CONFIG.disclosure)}<br>가격·재고는 수시로 변동되므로 쿠팡 상품 페이지에서 확인해 주세요.</p>
       </article>
     </main>
@@ -214,7 +214,7 @@ function guidePage(g) {
         ${k.p.image ? `<img class="hero" src="${esc(k.p.image)}" alt="${esc(k.p.title)}" loading="lazy" />` : ""}
         <p>${esc(k.reason).replace(/\n/g, "<br>")}</p>
         ${widgetHTML(k.p)}
-        <a class="buy" href="${esc(k.p.link)}" target="_blank" rel="nofollow sponsored noopener">쿠팡에서 최저가 확인 →</a>
+        <a class="buy" href="${esc(k.p.link)}" target="_blank" rel="nofollow sponsored noopener">쿠팡에서 가격 확인 →</a>
       </section>`
         )
         .join("\n      ")}
@@ -316,7 +316,7 @@ function tistoryPost(g) {
       (k, i) =>
         `<h2>${i + 1}. ${esc(k.p.title)}</h2>\n<p>${esc(k.reason).replace(/\n/g, "<br>")}</p>\n${
           k.p.widget ? `<p style="text-align:center;">${widgetHTML(k.p)}</p>\n` : ""
-        }${cta(k.p, "쿠팡에서 최저가 확인")}`
+        }${cta(k.p, "쿠팡에서 가격 확인")}`
     )
     .join("\n");
   const faq = g.faq && g.faq.length
