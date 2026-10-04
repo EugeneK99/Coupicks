@@ -55,3 +55,10 @@ Meta 의 User Token Generator 가 "The user has not accepted the invite to test 
 ## 사람 검토 후 큐 승격
 
 PR #3의 변환 결과 `draft-queue.json`을 검토한 뒤 `node automation/approve-drafts.mjs --approve <id>`로 지정한 글만 `queue.json`에 승격한다. 여러 글은 `--approve`를 반복한다. 실행 자체가 사람의 본문 승인이다. 게시 완료·과거 슬롯·큐에 이미 있는 ID/본문은 제외한다. 다른 대기 글을 덮어쓰지 않는다. 제휴 글은 고지, productIds, direct/site linkMode가 필요하고 대괄호 플레이스홀더는 허용하지 않는다. 실제 상품 검증은 발행 시 별도로 다시 확인한다. paused는 변경하지 않으며, 실계정 게시·워크플로 실행은 사용자가 직접 한다.
+## 월간 초안 변환
+
+`node automation/import-drafts.mjs` → `automation/draft-queue.json`에 검토용 초안를 생성한다. `queue.json`을 수정하지 않고, 모든 항목은 draft이며 승인 해시를 만들지 않는다. 제목에서 상품 확인 대기인 8개는 requiresProductSelection=true로 표시된다. 실제 상품 연결·고지·본문 검토 및 사람이 확인한 승인 해시 생성 전에는 예약하지 않는다. 이미 게시한 첫 소개글은 재등록하지 않으며, 예약 시각은 검토 후 미래 날짜로 재배치한다.
+
+`--from-date YYYY-MM-DD`를 지정하면 게시 완료 글을 제외한 나머지를 해당 날짜 이후 평일 17시로 순서대로 재배치한다(공휴일은 별도 확인 필요). ID는 원고 날짜 기준으로 유지한다. 10/5 소개글은 수동 게시 완료로 제외하고, 10/6 질문은 게시 기록 ID 또는 본문으로 제외한다. 소급 발행하지 않도록 다음 평일부터 지정한다.
+
+검증: `node --test automation/import-drafts.test.mjs`. 문서 안내 섹션은 원고로 가져오지 않는다.
