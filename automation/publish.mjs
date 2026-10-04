@@ -42,12 +42,15 @@ export function reconcile(queue, remote) {
 async function api(path, token, params={}, method='POST') {
   const body = new URLSearchParams({...params,access_token:token});
   const url = 'https://graph.threads.net/v1.0/'+path;
-  const response=await fetch(method==='GET'?url+'?'+body:url, {method, ...(method==='POST'?{body}:{}), signal:AbortSignal.timeout(25000)});
-  const result=await response.json();
+  let response;
+  try {response=await fetch(method==='GET'?url+'?'+body:url, {method, ...(method==='POST'?{body}:{}), signal:AbortSignal.timeout(25000)});}
+  catch {throw Object.assign(Error('threads_network_error'),{transient:true});}
+  let result;
+  try {result=await response.json();} catch {throw Object.assign(Error('threads_invalid_response_'+response.status),{transient:response.status>=500});}
   if(!response.ok || result.error) {
     const e=result.error||{};
     const detail=String(e.message||'').split(token).join('***');
-    throw Error('threads_api_error_'+response.status+(e.code?'_'+e.code:'')+(e.error_subcode?'_'+e.error_subcode:'')+(detail?': '+detail:''));
+    throw Object.assign(Error('threads_api_error_'+response.status+(e.code?'_'+e.code:'')+(e.error_subcode?'_'+e.error_subcode:'')+(detail?': '+detail:'')),{transient:response.status>=500 && response.status<=599});
   }
   return result;
 }
@@ -60,6 +63,32 @@ export async function waitForContainer(apiFn, id, token, {tries=12, delayMs=3000
     await sleep(delayMs);
   }
   throw Error('container_not_ready');
+}
+// Retry only container creation, never an ambiguous publish request.
+export async function publishPost(post, userId, token, config, {apiFn=api,save=()=>{},nowFn=Date.now,sleep=ms=>new Promise(r=>setTimeout(r,ms))}={}) {
+  try {
+    if(post.containerId) throw Error('existing_container_requires_remote_check');
+    while(true) {
+      if(nowFn()>Date.parse(post.scheduledAt)+config.maxDelayMinutes*60000) throw Error('missed_slot');
+      try {
+        const container=await apiFn(userId+'/threads',token,{media_type:'TEXT',text:post.text});
+        if(!container.id) throw Error('missing_container_id');
+        post.containerId=container.id;save();break;
+      } catch(e) {
+        if(post.containerId || !e.transient || (post.creationRetries||0)>=2) throw e;
+        const delay=1000;
+        if(nowFn()+delay>Date.parse(post.scheduledAt)+config.maxDelayMinutes*60000) throw Error('missed_slot');
+        post.creationRetries=(post.creationRetries||0)+1;save();
+        await sleep(delay);
+      }
+    }
+    await waitForContainer(apiFn,post.containerId,token,{sleep});
+    const result=await apiFn(userId+'/threads_publish',token,{creation_id:post.containerId});
+    if(!result.id) throw Error('missing_publish_id');
+    post.remoteId=result.id;post.status='published';post.publishedAt=new Date(nowFn()).toISOString();save();
+  } catch(e) {
+    post.status=post.containerId?'needs_remote_check':'held';post.reason=e.message;save();throw e;
+  }
 }
 export async function run({live=false, now=Date.now()}={}) {
   const config=read('automation/config.json'), queue=read('automation/queue.json'), products=read('automation/catalog.json');
@@ -84,13 +113,7 @@ export async function run({live=false, now=Date.now()}={}) {
     if(!ready) continue;
     if(!live) {console.log('Dry run eligible:',post.id); continue;}
     post.status='publishing';post.attemptId=crypto.randomUUID();write('automation/queue.json',queue);
-    try {
-      const container=await api(me.id+'/threads',process.env.THREADS_ACCESS_TOKEN,{media_type:'TEXT',text:post.text});
-      post.containerId=container.id;write('automation/queue.json',queue);
-      await waitForContainer(api,container.id,process.env.THREADS_ACCESS_TOKEN);
-      const result=await api(me.id+'/threads_publish',process.env.THREADS_ACCESS_TOKEN,{creation_id:container.id});
-      post.remoteId=result.id;post.status='published';post.publishedAt=new Date(now).toISOString();write('automation/queue.json',queue);
-    } catch(e) {post.status='needs_remote_check';post.reason=e.message;write('automation/queue.json',queue);throw e;}
+    await publishPost(post,me.id,process.env.THREADS_ACCESS_TOKEN,config,{save:()=>write('automation/queue.json',queue)});
     break;
   }
 }
