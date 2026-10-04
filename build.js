@@ -289,12 +289,11 @@ swap("LINKS", links);
 fs.writeFileSync(path.join(ROOT, "index.html"), html);
 
 // ── sitemap / robots ──
-const today = new Date().toISOString().slice(0, 10);
 const urls = [`${BASE}/`, ...guides.map((g) => `${BASE}/g/${g.slug}/`), ...items.map((p) => `${BASE}/p/${p.slug}/`)];
 fs.writeFileSync(
   path.join(ROOT, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
-    .map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`)
+    .map((u) => `  <url><loc>${u}</loc></url>`)
     .join("\n")}\n</urlset>\n`
 );
 fs.writeFileSync(

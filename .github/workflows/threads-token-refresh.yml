@@ -19,6 +19,7 @@ jobs:
       - name: Refresh token and store it as a repository secret
         env:
           THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
           SECRETS_PAT: ${{ secrets.SECRETS_PAT }}
         run: |
           # GITHUB_TOKEN 은 저장소 Secret 을 쓸 수 없어서, Secrets 쓰기 권한만 있는 PAT 가 필요하다.
@@ -27,6 +28,7 @@ jobs:
             exit 1
           fi
           export TOKEN_OUT="$RUNNER_TEMP/new_token"
+          trap 'rm -f "$TOKEN_OUT"' EXIT
           node automation/refresh-token.mjs
           GH_TOKEN="$SECRETS_PAT" gh secret set THREADS_ACCESS_TOKEN --repo "$GITHUB_REPOSITORY" < "$TOKEN_OUT"
           rm -f "$TOKEN_OUT"

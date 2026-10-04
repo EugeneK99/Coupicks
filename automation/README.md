@@ -20,7 +20,7 @@ GitHub Actions는 예약 워커의 초기 운영용이다. cron은 정확한 실
 
 ## 토큰 자동 갱신
 
-`threads-token-refresh.yml` 이 매주 월요일 03:00 UTC 에 `refresh-token.mjs` 로 토큰을 갱신하고(장기 토큰 약 60일, 발급 24시간 후부터 갱신 가능), 새 값을 `gh secret set THREADS_ACCESS_TOKEN` 으로 저장소 Secret 에 바로 덮어쓴다. 토큰은 로그에 찍히지 않는다(`::add-mask::`, 파일로만 전달).
+`threads-token-refresh.yml` 이 매주 월요일 03:00 UTC 에 `refresh-token.mjs` 로 토큰을 갱신하고(장기 토큰 약 60일, 발급 24시간 후부터 갱신 가능), 새 값을 `gh secret set THREADS_ACCESS_TOKEN` 으로 저장소 Secret 에 바로 덮어쓴다. 저장 전에 새 토큰으로 `/me`를 호출해 config의 계정명과 THREADS_USER_ID가 모두 일치하는지 확인한다. 실패하면 기존 Secret을 덮어쓰지 않는다. 토큰은 로그에 출력하지 않고 임시 파일로만 전달한다.
 
 필요한 Secret (모두 GitHub → Settings → Secrets and variables → Actions 에 직접 입력, 채팅·코드에 붙이지 않는다):
 
@@ -52,6 +52,15 @@ Meta 의 User Token Generator 가 "The user has not accepted the invite to test 
 
 `code` 는 1회용이고 유효시간이 짧다. 실패하면 2번부터 다시 한다.
 
+## 장애 복구와 예약 유지
+
+컨테이너 ID가 없는 생성 단계에서 5xx·네트워크 일시 오류는 같은 30분 슬롯 내 최대 2회 추가 재시도한다. 재시도 횟수는 큐에 저장하며, 한도를 넘거나 슬롯이 지나면 held로 멈춘다. 컨테이너가 만들어진 뒤 또는 게시 호출이 불명확한 경우 needs_remote_check로 멈추며 자동 재게시하지 않는다. 실제 Meta 오류 분류와 운영 중 동작은 실계정 확인 필요하다.
+
+SECRETS_PAT는 **90일 만료로 운영**하며 실제 설정의 만료일을 확인하고 만료 전에 사용자가 새 PAT를 GitHub Secrets에서 교체한다. 90일은 모든 PAT의 고정 수명이 아니며 생성 시 설정·조직 정책에 따라 달라질 수 있다. 값을 문서에 적지 않는다. [GitHub PAT 안내](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+
+공개 저장소는 **60일 동안 저장소 활동이 없으면 예약 워크플로가 자동 중지될 수 있다**. 사용자가 Actions 화면에서 활성 상태를 확인하고 필요하면 다시 활성화한다. 시간 지연·누락도 가능하므로 정확한 시각은 보장하지 않는다. [GitHub 예약 이벤트 안내](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+
+sitemap.xml은 lastmod를 생략하여 날짜만 바뀌는 빌드 변경을 방지한다.
 ## 사람 검토 후 큐 승격
 
 PR #3의 변환 결과 `draft-queue.json`을 검토한 뒤 `node automation/approve-drafts.mjs --approve <id>`로 지정한 글만 `queue.json`에 승격한다. 여러 글은 `--approve`를 반복한다. 실행 자체가 사람의 본문 승인이다. 게시 완료·과거 슬롯·큐에 이미 있는 ID/본문은 제외한다. 다른 대기 글을 덮어쓰지 않는다. 제휴 글은 고지, productIds, direct/site linkMode가 필요하고 대괄호 플레이스홀더는 허용하지 않는다. 실제 상품 검증은 발행 시 별도로 다시 확인한다. paused는 변경하지 않으며, 실계정 게시·워크플로 실행은 사용자가 직접 한다.
