@@ -329,7 +329,11 @@
             price +
             "</div>" +
             '<div class="actions">' +
-            '<span class="cta">쿠팡에서 최저가 확인 →</span>' +
+            '<a class="cta stretched" href="' +
+            esc(p.link) +
+            '" target="_blank" rel="nofollow sponsored noopener" aria-label="' +
+            esc(p.title) +
+            ' 쿠팡에서 최저가 확인">쿠팡에서 최저가 확인 →</a>' +
             detail +
             "</div>"
           );
@@ -372,27 +376,12 @@
 
           grid.innerHTML = "";
           list.forEach(function (p, i) {
-            // 카드는 div (내부에 상세 링크 <a> 가 들어가므로 중첩 <a> 방지)
+            // 카드는 div: 쿠팡 <a> 가 카드 전체를 덮고(stretched link),
+            // "ⓘ 후기" 링크는 그 위에 따로 떠 있어 중첩 <a> 없이 둘 다 진짜 링크로 동작
             var card = document.createElement("div");
             card.className = "card";
             card.style.animationDelay = i * 0.05 + "s"; // 순차 페이드인
             card.innerHTML = cardHTML(p);
-
-            // 카드 본체(쿠팡 이동)를 감싸는 링크: 썸네일·본문·CTA 영역
-            var open = function () {
-              window.open(p.link, "_blank", "noopener");
-            };
-            ["thumb", "body", "actions"].forEach(function (cls) {
-              var el = card.querySelector("." + cls);
-              if (!el) return;
-              // actions 내부의 상세 링크는 제외 (자체 이동)
-              el.style.cursor = "pointer";
-              el.addEventListener("click", function (e) {
-                if (e.target.closest(".detail-link")) return; // 상세 링크는 통과
-                open();
-              });
-            });
-
             grid.appendChild(card);
           });
         }
