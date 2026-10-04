@@ -38,3 +38,16 @@ GitHub Actions는 예약 워커의 초기 운영용이다. cron은 정확한 실
 2. 권한 `threads_basic`, `threads_content_publish` 로 OAuth 로그인해 단기 토큰을 받고, 장기 토큰으로 교환(`th_exchange_token`, 앱 시크릿 필요 — 터미널에서 직접 실행하고 값을 공유하지 않는다).
 3. 위 Secret 3개 입력.
 4. `node automation/doctor.mjs` (키 존재 확인) → `node automation/connection.mjs` (계정 확인) → 테스트 글 1건 수동 검증 → `config.json` 의 `paused` 를 `false` 로.
+
+## 토큰 발급기가 막힐 때: OAuth 우회 (`oauth-token.mjs`)
+
+Meta 의 User Token Generator 가 "The user has not accepted the invite to test the app"(1349245) 로 막히면, 일반 OAuth 로그인으로 장기 토큰을 받는다.
+
+1. Meta 앱 → Use cases → Threads API → Settings 의 **Redirect Callback URLs** 에 `https://eugenek99.github.io/Coupicks/` 를 넣고 Save (이 값과 스크립트의 리다이렉트 주소가 글자 하나까지 같아야 한다).
+2. `node automation/oauth-token.mjs url` 이 출력한 주소를 `@salraemallae.pick` 으로 로그인한 브라우저에서 열어 승인한다. 사이트로 돌아오면 주소창에 `?code=...` 가 붙는다.
+3. 같은 Settings 화면의 **Threads app secret → Show** 값을 터미널에서만 환경변수로 지정한다(채팅·파일·커밋에 넣지 않는다):
+   `read -rs THREADS_APP_SECRET && export THREADS_APP_SECRET`
+4. `node automation/oauth-token.mjs exchange --dry` 로 먼저 계정 확인(Secret 저장 없음) → 이상 없으면 `--dry` 없이 실행하면 `THREADS_ACCESS_TOKEN`, `THREADS_USER_ID` 가 저장소 Secret 에 저장된다. 토큰은 화면에 출력되지 않는다.
+5. 끝나면 `unset THREADS_APP_SECRET`.
+
+`code` 는 1회용이고 유효시간이 짧다. 실패하면 2번부터 다시 한다.

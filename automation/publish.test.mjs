@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {eligible,reconcile} from './publish.mjs';
 import {refreshToken} from './refresh-token.mjs';
+import {authorizeUrl,parseCode,exchange} from './oauth-token.mjs';
 const now=Date.parse('2026-10-05T08:00:00Z');
 const config={paused:false,maxDelayMinutes:30,maxTextLength:500,verificationHours:2,disclosure:'広告'};
 const make=()=>({id:'intro',text:'Hello',status:'scheduled',scheduledAt:'2026-10-05T08:00:00Z',approvedHash:crypto.createHash('sha256').update('Hello').digest('hex'),productIds:[]});
@@ -31,4 +32,27 @@ test('token refresh returns the new token, and failures never leak the token',as
   const bad=async()=>({ok:false,status:400,json:async()=>({error:{message:'secret-OLD-token'}})});
   await assert.rejects(()=>refreshToken('OLD',bad),e=>/refresh_failed_400/.test(e.message)&&!/OLD/.test(e.message));
   await assert.rejects(()=>refreshToken('',ok),/not configured/);
+});
+
+test('oauth: authorize url has the needed scopes and code parsing accepts a full url or a bare code',()=>{
+  const u=new URL(authorizeUrl('123','https://example.com/cb/'));
+  assert.equal(u.searchParams.get('client_id'),'123');assert.equal(u.searchParams.get('scope'),'threads_basic,threads_content_publish');assert.equal(u.searchParams.get('response_type'),'code');
+  assert.equal(parseCode('https://example.com/cb/?code=ABC123#_'),'ABC123');
+  assert.equal(parseCode('ABC123#_'),'ABC123');assert.equal(parseCode('  ABC123 '),'ABC123');
+  assert.throws(()=>parseCode(''),/code_missing/);assert.throws(()=>parseCode('https://example.com/cb/'),/code_missing/);
+});
+test('oauth: exchange goes code -> short -> long token, checks the account, and never leaks secrets in errors',async()=>{
+  const seen=[];
+  const ok=async(u,o)=>{u=String(u);seen.push(u.split('?')[0]);
+    if(u.includes('/oauth/access_token'))return {ok:true,status:200,json:async()=>({access_token:'SHORT',user_id:'42'})};
+    if(u.includes('th_exchange_token'))return {ok:true,status:200,json:async()=>({access_token:'LONG',expires_in:5184000})};
+    return {ok:true,status:200,json:async()=>({id:'42',username:'salraemallae.pick'})};};
+  const r=await exchange('CODE','SECRET',ok);
+  assert.deepEqual([r.token,r.userId,r.username],['LONG','42','salraemallae.pick']);
+  assert.equal(seen.length,3);
+  const other=async u=>({ok:true,status:200,json:async()=>String(u).includes('/me')?{id:'7',username:'someone.else'}:{access_token:'X'}});
+  await assert.rejects(()=>exchange('CODE','SECRET',other),/wrong_account/);
+  const bad=async()=>({ok:false,status:400,json:async()=>({error_message:'leaked SECRET CODE'})});
+  await assert.rejects(()=>exchange('CODE','SECRET',bad),e=>/oauth_error_400/.test(e.message)&&!/SECRET|CODE/.test(e.message));
+  await assert.rejects(()=>exchange('CODE','',ok),/not configured/);
 });
