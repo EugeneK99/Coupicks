@@ -13,3 +13,7 @@ GitHub Actions는 예약 워커의 초기 운영용이다. cron은 정확한 실
 사용자 인증과 호스팅을 완료한 뒤 실계정 테스트, 비밀키 저장, 최신 API 한도 검증, 하루 발행 제한/장애 복구 검증을 마쳐야 운영을 활성화할 수 있다. API 키를 저장소에 넣지 않는다.
 
 연결 점검: `node automation/doctor.mjs`는 키 존재 여부만 표시한다. `node automation/connection.mjs`는 실제 계정명이 salraemallae.pick인지 확인한다. 토큰 자동 갱신은 비밀 저장소 어댑터 연결 전까지 미완료다.
+
+## 중복 게시 방지 (원격 대조)
+
+`--live` 실행은 발행 전에 계정을 확인하고 Threads의 최근 글 25개를 읽어, 대기 중인 글과 본문이 같은 글이 이미 있으면 `published`(reason=`reconciled_from_remote`)로 맞춘 뒤 발행하지 않는다. 상태 push가 실패해 로컬 기록을 잃어도 같은 글이 두 번 올라가지 않는다. `needs_remote_check` 도 원격에서 확인되면 자동으로 해소된다. 원격에 없는 `needs_remote_check`/`held` 는 사람이 확인하기 전까지 자동 재발행하지 않는다. 상태 push는 rebase 후 3회 재시도한다.
