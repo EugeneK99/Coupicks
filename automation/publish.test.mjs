@@ -53,6 +53,6 @@ test('oauth: exchange goes code -> short -> long token, checks the account, and 
   const other=async u=>({ok:true,status:200,json:async()=>String(u).includes('/me')?{id:'7',username:'someone.else'}:{access_token:'X'}});
   await assert.rejects(()=>exchange('CODE','SECRET',other),/wrong_account/);
   const bad=async()=>({ok:false,status:400,json:async()=>({error_message:'leaked SECRET CODE'})});
-  await assert.rejects(()=>exchange('CODE','SECRET',bad),e=>/oauth_error_400/.test(e.message)&&!/SECRET|CODE/.test(e.message));
+  await assert.rejects(()=>exchange('CODE1234','SECRET1234',async()=>({ok:false,status:400,json:async()=>({error_message:'Invalid code CODE1234 for SECRET1234'})})),e=>/oauth_error_400/.test(e.message)&&/Invalid code \*\*\* for \*\*\*/.test(e.message)&&!/CODE1234|SECRET1234/.test(e.message));
   await assert.rejects(()=>exchange('CODE','',ok),/not configured/);
 });

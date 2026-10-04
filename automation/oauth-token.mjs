@@ -32,10 +32,19 @@ export function parseCode(input) {
   }
   return code.replace(/#_$/, '').replace(/#.*$/, '');
 }
-async function call(url, opts, fetchFn) {
+// Meta 오류 문구를 보여 주되, 시크릿·code·토큰 값은 가린다.
+export function redact(text, secrets) {
+  let out = String(text || '');
+  for(const v of secrets) if(v && String(v).length >= 4) out = out.split(String(v)).join('***');
+  return out;
+}
+async function call(url, opts, fetchFn, secrets=[]) {
   const r = await fetchFn(url, {...opts, signal: AbortSignal.timeout(25000)});
   const data = await r.json();
-  if(!r.ok || data.error || data.error_message) throw Error('threads_oauth_error_' + r.status + (data.error_type ? '_' + data.error_type : ''));
+  if(!r.ok || data.error || data.error_message) {
+    const detail = redact(data.error_message || (data.error && data.error.message) || '', secrets);
+    throw Error('threads_oauth_error_' + r.status + (data.error_type ? '_' + data.error_type : '') + (detail ? ': ' + detail : ''));
+  }
   return data;
 }
 // 단기 토큰 → 장기 토큰 → 계정 확인. 반환: {token, userId, username, expiresIn}
@@ -44,16 +53,16 @@ export async function exchange(code, secret, fetchFn=fetch) {
   const short = await call('https://graph.threads.net/oauth/access_token', {
     method: 'POST',
     body: new URLSearchParams({client_id: APP_ID, client_secret: secret, grant_type: 'authorization_code', redirect_uri: REDIRECT, code}),
-  }, fetchFn);
+  }, fetchFn, [secret, code]);
   const lu = new URL('https://graph.threads.net/access_token');
   lu.searchParams.set('grant_type', 'th_exchange_token');
   lu.searchParams.set('client_secret', secret);
   lu.searchParams.set('access_token', short.access_token);
-  const long = await call(lu, {}, fetchFn);
+  const long = await call(lu, {}, fetchFn, [secret, code, short.access_token]);
   const mu = new URL('https://graph.threads.net/v1.0/me');
   mu.searchParams.set('fields', 'id,username');
   mu.searchParams.set('access_token', long.access_token);
-  const me = await call(mu, {}, fetchFn);
+  const me = await call(mu, {}, fetchFn, [secret, code, short.access_token, long.access_token]);
   if(me.username !== USERNAME) throw Error('wrong_account');
   return {token: long.access_token, userId: String(me.id), username: me.username, expiresIn: long.expires_in};
 }
