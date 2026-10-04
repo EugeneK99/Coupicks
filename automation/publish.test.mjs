@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {eligible} from './publish.mjs';
+const now=Date.parse('2026-10-05T08:00:00Z');
+const config={paused:false,maxDelayMinutes:30,maxTextLength:500,verificationHours:2,disclosure:'広告'};
+const make=()=>({id:'intro',text:'Hello',status:'scheduled',scheduledAt:'2026-10-05T08:00:00Z',approvedHash:crypto.createHash('sha256').update('Hello').digest('hex'),productIds:[]});
+test('due verified revision passes, future and paused do not',()=>{assert.equal(eligible(make(),[],now,config),true);assert.equal(eligible(make(),[],now-1,config),false);assert.equal(eligible(make(),[],now,{...config,paused:true}),false);});
+test('changed text, missed slot and published records cannot publish',()=>{assert.throws(()=>eligible({...make(),text:'Changed'},[],now,config),/revision/);assert.throws(()=>eligible(make(),[],now+31*60000,config),/missed/);assert.equal(eligible({...make(),status:'published'},[],now,config),false);});
+test('affiliate requires disclosure and fresh evidence',()=>{assert.throws(()=>eligible({...make(),productIds:['x']},[],now,config),/disclosure/);const p={...make(),text:'広告 https://link.coupang.com/a/x',productIds:['x'],linkMode:'direct'};p.approvedHash=crypto.createHash('sha256').update(p.text).digest('hex');assert.throws(()=>eligible(p,[{id:'x',status:'verified',checkedAt:'bad'}],now,config),/unverified/);assert.equal(eligible(p,[{id:'x',status:'verified',checkedAt:new Date(now).toISOString(),affiliateUrl:'https://link.coupang.com/a/x'}],now,config),true);});

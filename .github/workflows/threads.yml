@@ -1,0 +1,34 @@
+name: Threads scheduled publishing
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0,10,20 8 * * 1-5'
+permissions:
+  contents: write
+concurrency:
+  group: threads-publishing
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test automation/publish.test.mjs
+      - name: Publish verified queue
+        env:
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+        run: node automation/publish.mjs --live
+      - name: Persist result even after failure
+        if: always()
+        run: |
+          git config user.name "Coupicks publisher"
+          git config user.email "publisher@users.noreply.github.com"
+          git add automation/queue.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Record Threads publishing state"
+            git push
+          fi
