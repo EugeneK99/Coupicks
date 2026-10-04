@@ -581,3 +581,28 @@ footer {
   border-color: var(--brand);
   color: var(--brand);
 }
+
+/* 카드 전체를 쿠팡 링크로: .cta 링크의 ::after 가 카드를 덮는다 (진짜 <a> 라 키보드/새 탭/우클릭 가능) */
+.card {
+  position: relative;
+}
+.card .cta.stretched {
+  text-decoration: none;
+}
+.card .cta.stretched::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.card .cta.stretched:focus-visible {
+  outline: none;
+}
+.card:focus-within {
+  border-color: var(--brand);
+  box-shadow: var(--shadow);
+}
+.card .actions .detail-link {
+  position: relative;
+  z-index: 2;
+}
