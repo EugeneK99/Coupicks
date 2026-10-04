@@ -17,3 +17,24 @@ GitHub Actions는 예약 워커의 초기 운영용이다. cron은 정확한 실
 ## 중복 게시 방지 (원격 대조)
 
 `--live` 실행은 발행 전에 계정을 확인하고 Threads의 최근 글 25개를 읽어, 대기 중인 글과 본문이 같은 글이 이미 있으면 `published`(reason=`reconciled_from_remote`)로 맞춘 뒤 발행하지 않는다. 상태 push가 실패해 로컬 기록을 잃어도 같은 글이 두 번 올라가지 않는다. `needs_remote_check` 도 원격에서 확인되면 자동으로 해소된다. 원격에 없는 `needs_remote_check`/`held` 는 사람이 확인하기 전까지 자동 재발행하지 않는다. 상태 push는 rebase 후 3회 재시도한다.
+
+## 토큰 자동 갱신
+
+`threads-token-refresh.yml` 이 매주 월요일 03:00 UTC 에 `refresh-token.mjs` 로 토큰을 갱신하고(장기 토큰 약 60일, 발급 24시간 후부터 갱신 가능), 새 값을 `gh secret set THREADS_ACCESS_TOKEN` 으로 저장소 Secret 에 바로 덮어쓴다. 토큰은 로그에 찍히지 않는다(`::add-mask::`, 파일로만 전달).
+
+필요한 Secret (모두 GitHub → Settings → Secrets and variables → Actions 에 직접 입력, 채팅·코드에 붙이지 않는다):
+
+| 이름 | 용도 |
+|---|---|
+| `THREADS_ACCESS_TOKEN` | Threads 장기 액세스 토큰 |
+| `THREADS_USER_ID` | `@salraemallae.pick` 의 Threads 사용자 ID |
+| `SECRETS_PAT` | 이 저장소 한정, 권한은 **Secrets: Read and write** 만 가진 fine-grained PAT (갱신된 토큰을 저장하기 위함. `GITHUB_TOKEN` 은 Secret 을 쓸 수 없다) |
+
+갱신이 실패하면 워크플로가 실패로 표시되어 GitHub 알림 메일이 온다. 토큰이 만료되면 발행 워커는 `connection`/`wrong_account` 오류로 멈추며 글을 올리지 않는다.
+
+## 연결 절차 (사람이 직접)
+
+1. Meta 개발자 앱 생성 → Threads 사용 사례 추가 → `@salraemallae.pick` 을 테스터로 추가·수락.
+2. 권한 `threads_basic`, `threads_content_publish` 로 OAuth 로그인해 단기 토큰을 받고, 장기 토큰으로 교환(`th_exchange_token`, 앱 시크릿 필요 — 터미널에서 직접 실행하고 값을 공유하지 않는다).
+3. 위 Secret 3개 입력.
+4. `node automation/doctor.mjs` (키 존재 확인) → `node automation/connection.mjs` (계정 확인) → 테스트 글 1건 수동 검증 → `config.json` 의 `paused` 를 `false` 로.

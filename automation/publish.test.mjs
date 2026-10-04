@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {eligible,reconcile} from './publish.mjs';
+import {refreshToken} from './refresh-token.mjs';
 const now=Date.parse('2026-10-05T08:00:00Z');
 const config={paused:false,maxDelayMinutes:30,maxTextLength:500,verificationHours:2,disclosure:'広告'};
 const make=()=>({id:'intro',text:'Hello',status:'scheduled',scheduledAt:'2026-10-05T08:00:00Z',approvedHash:crypto.createHash('sha256').update('Hello').digest('hex'),productIds:[]});
@@ -22,4 +23,12 @@ test('reconcile also resolves needs_remote_check but never touches held posts',(
   const remote=[{id:'r1',text:'Hello',timestamp:'2026-10-05T08:01:00+0000'}];
   reconcile(q,remote);
   assert.equal(q[0].status,'published');assert.equal(q[1].status,'held');
+});
+
+test('token refresh returns the new token, and failures never leak the token',async()=>{
+  const ok=async u=>({ok:true,status:200,json:async()=>({access_token:'NEW',expires_in:5184000}),_u:String(u)});
+  assert.equal((await refreshToken('OLD',ok)).access_token,'NEW');
+  const bad=async()=>({ok:false,status:400,json:async()=>({error:{message:'secret-OLD-token'}})});
+  await assert.rejects(()=>refreshToken('OLD',bad),e=>/refresh_failed_400/.test(e.message)&&!/OLD/.test(e.message));
+  await assert.rejects(()=>refreshToken('',ok),/not configured/);
 });
