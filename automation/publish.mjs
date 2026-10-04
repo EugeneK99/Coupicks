@@ -4,12 +4,22 @@ import {fileURLToPath} from 'node:url';
 const ROOT = new URL('../', import.meta.url);
 const read = name => JSON.parse(fs.readFileSync(new URL(name, ROOT), 'utf8'));
 const write = (name, value) => { const p = fileURLToPath(new URL(name,ROOT)); fs.writeFileSync(p+'.tmp', JSON.stringify(value,null,2)+'\n'); fs.renameSync(p+'.tmp',p); };
+export function validateContent(post, config) {
+  if(/\[[^\]\r\n]+\]/u.test(post.text||'')) throw Error('placeholder_remaining');
+  const affiliate=/(?:link\.coupang\.com|coupa\.ng)(?:[\/:?#\s]|$)/i.test(post.text||'') || (post.productIds||[]).length>0 || post.requiresProductSelection;
+  if(affiliate) {
+    if(!config.disclosure || !post.text?.startsWith(config.disclosure)) throw Error('missing_disclosure');
+    if(!Array.isArray(post.productIds) || !post.productIds.length) throw Error('missing_product_ids');
+    if(!['direct','site'].includes(post.linkMode)) throw Error('unassigned_link_mode');
+  }
+}
 export function eligible(post, products, now, config) {
   if(config.paused || post.status !== 'scheduled') return false;
   const due = Date.parse(post.scheduledAt);
   if(!Number.isFinite(due) || due>now) return false;
   if(now-due>config.maxDelayMinutes*60000) throw Error('missed_slot');
   if(!post.text?.trim() || [...post.text].length>config.maxTextLength) throw Error('invalid_text');
+  validateContent(post,config);
   if(post.approvedHash !== crypto.createHash('sha256').update(post.text).digest('hex')) throw Error('unverified_revision');
   if((post.productIds || []).length) {
     if(!post.text.startsWith(config.disclosure)) throw Error('missing_disclosure');

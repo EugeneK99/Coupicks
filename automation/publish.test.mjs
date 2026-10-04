@@ -65,3 +65,17 @@ test('waitForContainer polls until FINISHED, fails fast on ERROR, and gives up a
   await assert.rejects(()=>waitForContainer(async()=>({status:'ERROR'}),'c','t',{sleep:noSleep}),/container_error/);
   await assert.rejects(()=>waitForContainer(async()=>({status:'IN_PROGRESS'}),'c','t',{sleep:noSleep,tries:3}),/container_not_ready/);
 });
+
+test('affiliate URLs cannot bypass disclosure and product IDs',()=>{
+ for(const url of ['https://link.coupang.com/a/x','https://coupa.ng/test']) {
+  const p={...make(),text:url};p.approvedHash=crypto.createHash('sha256').update(p.text).digest('hex');
+  assert.throws(()=>eligible(p,[],now,config),/missing_disclosure/);
+  p.text='広告 '+url;p.approvedHash=crypto.createHash('sha256').update(p.text).digest('hex');
+  assert.throws(()=>eligible(p,[],now,config),/missing_product_ids/);
+ }
+});
+test('unfilled bracket placeholders are held by eligibility guard',()=>{
+ const p={...make(),text:'Hello [A 정확한 옵션]'};
+ p.approvedHash=crypto.createHash('sha256').update(p.text).digest('hex');
+ assert.throws(()=>eligible(p,[],now,config),/placeholder_remaining/);
+});
