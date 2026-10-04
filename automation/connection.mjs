@@ -8,4 +8,5 @@ const response=await fetch(url,{signal:AbortSignal.timeout(25000)});
 const data=await response.json();
 if(!response.ok || data.error) throw Error(`connection_check_failed_${response.status}`);
 if(data.username!=='salraemallae.pick') throw Error('Unexpected Threads account');
+if(process.env.THREADS_USER_ID && String(data.id)!==process.env.THREADS_USER_ID) throw Error('user_id_mismatch');
 console.log(JSON.stringify({connected:true,username:data.username,userId:data.id}));

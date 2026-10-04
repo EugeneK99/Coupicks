@@ -1,0 +1,19 @@
+name: Threads connection check
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # 읽기 전용: Secret 의 토큰으로 계정명·사용자 ID 만 확인한다. 토큰은 출력하지 않는다.
+      - name: Check Threads token and account
+        env:
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+        run: node automation/connection.mjs
