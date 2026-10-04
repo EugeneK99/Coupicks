@@ -51,3 +51,8 @@ Meta 의 User Token Generator 가 "The user has not accepted the invite to test 
 5. 끝나면 `unset THREADS_APP_SECRET`.
 
 `code` 는 1회용이고 유효시간이 짧다. 실패하면 2번부터 다시 한다.
+## 월간 초안 변환
+
+`node automation/import-drafts.mjs` → `automation/draft-queue.json`에 검토용 20개를 생성한다. `queue.json`을 수정하지 않고, 모든 항목은 draft이며 승인 해시를 만들지 않는다. 제목에서 상품 확인 대기인 8개는 requiresProductSelection=true로 표시된다. 실제 상품 연결·고지·본문 검토 및 사람이 확인한 승인 해시 생성 전에는 예약하지 않는다. 이미 게시한 첫 소개글은 재등록하지 않으며, 예약 시각은 검토 후 미래 날짜로 재배치한다.
+
+검증: `node --test automation/import-drafts.test.mjs`. 문서 안내 섹션은 원고로 가져오지 않는다.
