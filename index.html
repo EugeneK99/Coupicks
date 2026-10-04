@@ -311,7 +311,7 @@
                 esc(p.slug) +
                 "/" +
                 detailQuery +
-                '">ⓘ 후기</a>'
+                '">ⓘ 상품 정보</a>'
               : "";
 
           return (
@@ -377,7 +377,7 @@
           grid.innerHTML = "";
           list.forEach(function (p, i) {
             // 카드는 div: 쿠팡 <a> 가 카드 전체를 덮고(stretched link),
-            // "ⓘ 후기" 링크는 그 위에 따로 떠 있어 중첩 <a> 없이 둘 다 진짜 링크로 동작
+            // "ⓘ 상품 정보" 링크는 그 위에 따로 떠 있어 중첩 <a> 없이 둘 다 진짜 링크로 동작
             var card = document.createElement("div");
             card.className = "card";
             card.style.animationDelay = i * 0.05 + "s"; // 순차 페이드인

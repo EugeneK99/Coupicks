@@ -1,0 +1,34 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {eligible,reconcile} from './publish.mjs';
+import {refreshToken} from './refresh-token.mjs';
+const now=Date.parse('2026-10-05T08:00:00Z');
+const config={paused:false,maxDelayMinutes:30,maxTextLength:500,verificationHours:2,disclosure:'広告'};
+const make=()=>({id:'intro',text:'Hello',status:'scheduled',scheduledAt:'2026-10-05T08:00:00Z',approvedHash:crypto.createHash('sha256').update('Hello').digest('hex'),productIds:[]});
+test('due verified revision passes, future and paused do not',()=>{assert.equal(eligible(make(),[],now,config),true);assert.equal(eligible(make(),[],now-1,config),false);assert.equal(eligible(make(),[],now,{...config,paused:true}),false);});
+test('changed text, missed slot and published records cannot publish',()=>{assert.throws(()=>eligible({...make(),text:'Changed'},[],now,config),/revision/);assert.throws(()=>eligible(make(),[],now+31*60000,config),/missed/);assert.equal(eligible({...make(),status:'published'},[],now,config),false);});
+test('affiliate requires disclosure and fresh evidence',()=>{assert.throws(()=>eligible({...make(),productIds:['x']},[],now,config),/disclosure/);const p={...make(),text:'広告 https://link.coupang.com/a/x',productIds:['x'],linkMode:'direct'};p.approvedHash=crypto.createHash('sha256').update(p.text).digest('hex');assert.throws(()=>eligible(p,[{id:'x',status:'verified',checkedAt:'bad'}],now,config),/unverified/);assert.equal(eligible(p,[{id:'x',status:'verified',checkedAt:new Date(now).toISOString(),affiliateUrl:'https://link.coupang.com/a/x'}],now,config),true);});
+
+test('remote reconcile marks an already-posted text as published and ignores unrelated or older posts',()=>{
+  const q=[{...make(),text:'Hello\r\n'},{...make(),id:'other',text:'Other'}];
+  const remote=[{id:'r1',text:'Hello',timestamp:'2026-10-05T08:00:05+0000'},{id:'old',text:'Other',timestamp:'2026-10-01T08:00:00+0000'}];
+  assert.equal(reconcile(q,remote),true);
+  assert.equal(q[0].status,'published');assert.equal(q[0].remoteId,'r1');
+  assert.equal(q[1].status,'scheduled');
+  assert.equal(reconcile(q,remote),false);
+});
+test('reconcile also resolves needs_remote_check but never touches held posts',()=>{
+  const q=[{...make(),status:'needs_remote_check'},{...make(),id:'h',status:'held'}];
+  const remote=[{id:'r1',text:'Hello',timestamp:'2026-10-05T08:01:00+0000'}];
+  reconcile(q,remote);
+  assert.equal(q[0].status,'published');assert.equal(q[1].status,'held');
+});
+
+test('token refresh returns the new token, and failures never leak the token',async()=>{
+  const ok=async u=>({ok:true,status:200,json:async()=>({access_token:'NEW',expires_in:5184000}),_u:String(u)});
+  assert.equal((await refreshToken('OLD',ok)).access_token,'NEW');
+  const bad=async()=>({ok:false,status:400,json:async()=>({error:{message:'secret-OLD-token'}})});
+  await assert.rejects(()=>refreshToken('OLD',bad),e=>/refresh_failed_400/.test(e.message)&&!/OLD/.test(e.message));
+  await assert.rejects(()=>refreshToken('',ok),/not configured/);
+});
