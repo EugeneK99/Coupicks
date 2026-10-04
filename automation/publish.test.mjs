@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import {eligible,reconcile} from './publish.mjs';
+import {eligible,reconcile,waitForContainer} from './publish.mjs';
 import {refreshToken} from './refresh-token.mjs';
 import {authorizeUrl,parseCode,exchange} from './oauth-token.mjs';
 const now=Date.parse('2026-10-05T08:00:00Z');
@@ -55,4 +55,13 @@ test('oauth: exchange goes code -> short -> long token, checks the account, and 
   const bad=async()=>({ok:false,status:400,json:async()=>({error_message:'leaked SECRET CODE'})});
   await assert.rejects(()=>exchange('CODE1234','SECRET1234',async()=>({ok:false,status:400,json:async()=>({error_message:'Invalid code CODE1234 for SECRET1234'})})),e=>/oauth_error_400/.test(e.message)&&/Invalid code \*\*\* for \*\*\*/.test(e.message)&&!/CODE1234|SECRET1234/.test(e.message));
   await assert.rejects(()=>exchange('CODE','',ok),/not configured/);
+});
+
+test('waitForContainer polls until FINISHED, fails fast on ERROR, and gives up after the retry limit',async()=>{
+  const seq=['IN_PROGRESS','IN_PROGRESS','FINISHED'];let n=0;
+  const noSleep=async()=>{};
+  const ok=async()=>({status:seq[n++]});
+  assert.equal((await waitForContainer(ok,'c','t',{sleep:noSleep})).status,'FINISHED');assert.equal(n,3);
+  await assert.rejects(()=>waitForContainer(async()=>({status:'ERROR'}),'c','t',{sleep:noSleep}),/container_error/);
+  await assert.rejects(()=>waitForContainer(async()=>({status:'IN_PROGRESS'}),'c','t',{sleep:noSleep,tries:3}),/container_not_ready/);
 });

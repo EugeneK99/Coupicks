@@ -44,8 +44,22 @@ async function api(path, token, params={}, method='POST') {
   const url = 'https://graph.threads.net/v1.0/'+path;
   const response=await fetch(method==='GET'?url+'?'+body:url, {method, ...(method==='POST'?{body}:{}), signal:AbortSignal.timeout(25000)});
   const result=await response.json();
-  if(!response.ok || result.error) throw Error('threads_api_error_'+response.status);
+  if(!response.ok || result.error) {
+    const e=result.error||{};
+    const detail=String(e.message||'').split(token).join('***');
+    throw Error('threads_api_error_'+response.status+(e.code?'_'+e.code:'')+(e.error_subcode?'_'+e.error_subcode:'')+(detail?': '+detail:''));
+  }
   return result;
+}
+// 게시(publish) 전에 컨테이너가 FINISHED 인지 확인한다. 만들자마자 게시하면 400 이 날 수 있다.
+export async function waitForContainer(apiFn, id, token, {tries=12, delayMs=3000, sleep=ms=>new Promise(r=>setTimeout(r,ms))}={}) {
+  for(let i=0;i<tries;i++) {
+    const s=await apiFn(id,token,{fields:'status,error_message'},'GET');
+    if(s.status==='FINISHED') return s;
+    if(['ERROR','EXPIRED'].includes(s.status)) throw Error('container_'+String(s.status).toLowerCase());
+    await sleep(delayMs);
+  }
+  throw Error('container_not_ready');
 }
 export async function run({live=false, now=Date.now()}={}) {
   const config=read('automation/config.json'), queue=read('automation/queue.json'), products=read('automation/catalog.json');
@@ -73,6 +87,7 @@ export async function run({live=false, now=Date.now()}={}) {
     try {
       const container=await api(me.id+'/threads',process.env.THREADS_ACCESS_TOKEN,{media_type:'TEXT',text:post.text});
       post.containerId=container.id;write('automation/queue.json',queue);
+      await waitForContainer(api,container.id,process.env.THREADS_ACCESS_TOKEN);
       const result=await api(me.id+'/threads_publish',process.env.THREADS_ACCESS_TOKEN,{creation_id:container.id});
       post.remoteId=result.id;post.status='published';post.publishedAt=new Date(now).toISOString();write('automation/queue.json',queue);
     } catch(e) {post.status='needs_remote_check';post.reason=e.message;write('automation/queue.json',queue);throw e;}
