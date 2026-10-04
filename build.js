@@ -308,7 +308,7 @@ fs.writeFileSync(
 
 // 티스토리에 그대로 붙여넣는 "완성 글" HTML (HTML 모드). 인라인 스타일만 사용.
 function tistoryPost(g) {
-  const disc = `<p style="font-size:13px;color:#8a6d00;background:#fff8e1;padding:10px 14px;border-radius:8px;">${esc(SITE_CONFIG.disclosure.replace("이 사이트는", "이 포스팅은"))}</p>`;
+  const disc = `<p style="font-size:13px;color:#8a6d00;background:#fff8e1;padding:10px 14px;border-radius:8px;">${esc(SITE_CONFIG.disclosure)}</p>`;
   const cta = (p, label) =>
     `<p style="text-align:center;margin:12px 0 28px;"><a href="${esc(p.link)}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;padding:12px 24px;background:#ff5722;color:#fff;border-radius:10px;font-weight:700;text-decoration:none;">${label} →</a></p>`;
   const picks = g.picks
