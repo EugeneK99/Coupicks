@@ -91,7 +91,7 @@ const PRODUCTS = [
     slug: "locknlock-baro-hankki",
     title: "락앤락 바로한끼 밥용기 세트 라이트 (2세트 320ml 3P)",
     link: "https://link.coupang.com/a/hQfhUKIYZU",
-    image: "",
+    image: "https://thumbnail2.coupangcdn.com/thumbnails/remote/212x212ex/image/retail/images/144695377917502-c844decc-5a39-4a96-867f-435744890317.png",
     desc: "320ml(3P)·2세트 옵션. 구성품과 사용 조건은 상품 설명에서 확인하세요.",
     badge: "",
     category: "주방",
