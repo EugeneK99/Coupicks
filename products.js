@@ -96,6 +96,56 @@ const PRODUCTS = [
     badge: "",
     category: "주방",
   },
+  {
+    "slug": "nivea-dry-comfort-roll-on",
+    "title": "니베아 데오드란트 롤온 드라이 컴포트 (50ml, 1개)",
+    "link": "https://link.coupang.com/a/huDNMWvmyO",
+    "image": "",
+    "desc": "롤온 타입 데오드란트",
+    "badge": "",
+    "category": "뷰티",
+    "review": "겨드랑이 보톡스 후기에서 참고용으로 소개한 롤온 제품입니다. 직접 사용 후기는 아니며 제품 사용법과 성분은 쿠팡 상품 페이지에서 확인해 주세요."
+  },
+  {
+    "slug": "dove-original-deodorant-spray",
+    "title": "도브 오리지널 스프레이 데오드란트 (150ml, 1개)",
+    "link": "https://link.coupang.com/a/huDPGaAVnU",
+    "image": "",
+    "desc": "스프레이 타입 데오드란트",
+    "badge": "",
+    "category": "뷰티",
+    "review": "겨드랑이 보톡스 후기에서 참고용으로 소개한 스프레이 제품입니다. 직접 사용 후기는 아니며 제품 사용법과 성분은 쿠팡 상품 페이지에서 확인해 주세요."
+  },
+  {
+    "slug": "blancow-bha-body-wash",
+    "title": "블랑카우 BHA 여드름 기능성 바디워시 (500ml, 1개)",
+    "link": "https://link.coupang.com/a/hrDKMCmtZ6",
+    "image": "",
+    "desc": "블로그 등·가슴 피부 관리 글에서 소개한 바디워시",
+    "badge": "",
+    "category": "뷰티",
+    "review": "알라딘필링 후기 시리즈에 연결한 상품입니다. 직접 사용한 바디워시와 동일하다고 확인된 제품은 아닙니다. 시술 후 사용 여부와 시점은 시술 병원의 안내를 따르세요."
+  },
+  {
+    "slug": "heclafil-spicule-peeling",
+    "title": "알라딘 스피큘 헤클라필 각질제거제 (4.5g, 1개)",
+    "link": "https://link.coupang.com/a/hsBW55N0sC",
+    "image": "",
+    "desc": "셀프 각질 관리용 스피큘 필링제",
+    "badge": "",
+    "category": "뷰티",
+    "review": "알라딘필링 후기 시리즈에서 참고용으로 소개한 제품입니다. 병원 시술과 동일한 효과를 보장하거나 직접 사용해 본 후기를 의미하지 않습니다. 시술 후 회복 중인 피부에 추가 필링을 하지 말고, 제품 사용법과 병원 안내를 확인하세요."
+  },
+  {
+    "slug": "gelcure-herbal-peeling-strong-set",
+    "title": "젤쿠어 해초 약초필링 강필 세트 (1회분, 1개)",
+    "link": "https://link.coupang.com/a/hsBZkI2zYq",
+    "image": "",
+    "desc": "셀프 해초·약초 필링 1회용 세트",
+    "badge": "",
+    "category": "뷰티",
+    "review": "알라딘필링 후기 시리즈에서 참고용으로 소개한 셀프 필링 세트입니다. 병원 시술과 동일한 효과를 보장하거나 직접 사용해 본 후기를 의미하지 않습니다. 시술 후 회복 중인 피부에 추가 필링을 하지 말고, 제품 사용법과 병원 안내를 확인하세요."
+  },
 ];
 
 // ── 사이트 설정 (제목/소개문구 바꾸고 싶을 때 여기 수정) ──
