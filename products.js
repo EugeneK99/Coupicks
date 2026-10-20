@@ -89,6 +89,7 @@ const PRODUCTS = [
   },
   {
     slug: "locknlock-baro-hankki",
+    widget: "coupa.ng/cqh4mO",
     title: "락앤락 바로한끼 밥용기 세트 라이트 (2세트 320ml 3P)",
     link: "https://link.coupang.com/a/hznLcaYsGi",
     image: "",
