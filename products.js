@@ -147,6 +147,42 @@ const PRODUCTS = [
     "category": "뷰티",
     "review": "알라딘필링 후기 시리즈에서 참고용으로 소개한 셀프 필링 세트입니다. 병원 시술과 동일한 효과를 보장하거나 직접 사용해 본 후기를 의미하지 않습니다. 시술 후 회복 중인 피부에 추가 필링을 하지 말고, 제품 사용법과 병원 안내를 확인하세요."
   },
+  {
+    slug: "nico-serrano-jamon-100g",
+    widget: "coupa.ng/cqinVw",
+    title: "NICO 하몽 세라노 슬라이스 햄 (100g, 1개)",
+    link: "https://link.coupang.com/a/h0UO2iJLhs",
+    image: "https://t4a.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/271746328757640-e2665802-9fe3-4464-a199-0bf22c199076.jpg",
+    desc: "입문용으로 부담 없는 세라노 하몽 슬라이스",
+    badge: "",
+    category: "식품",
+    review:
+      "하몽 효능·주의점 글과 함께 소개한 입문용 세라노 슬라이스예요. 직접 먹어본 후기가 아니라 블로그 글에서 참고용으로 소개한 상품이에요. 하몽은 나트륨이 높은 가공육이라 한 번에 30~50g 정도로 즐기는 걸 추천하고, 임신 중이거나 혈압·신장 관리가 필요하다면 섭취 전 의료진과 상의하세요.",
+  },
+  {
+    slug: "1901-iberico-bellota-jamon-100g",
+    widget: "coupa.ng/cqinV6",
+    title: "1901 이베리코 베요타 하몽 슬라이스 (100g, 1개)",
+    link: "https://link.coupang.com/a/h0UTsn7KVw",
+    image: "https://thumbnail12.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/42958581774169-e6899d1a-eb36-4e0a-8a08-7c5b88ba56f7.JPG",
+    desc: "도토리를 먹여 키운 이베리코 베요타 하몽",
+    badge: "",
+    category: "식품",
+    review:
+      "하몽 효능·주의점 글과 함께 소개한 프리미엄 이베리코 베요타 슬라이스예요. 직접 먹어본 후기가 아니라 블로그 글에서 참고용으로 소개한 상품이에요. 하몽은 나트륨이 높은 가공육이라 한 번에 30~50g 정도로 즐기는 걸 추천하고, 임신 중이거나 혈압·신장 관리가 필요하다면 섭취 전 의료진과 상의하세요.",
+  },
+  {
+    slug: "costco-costa-brava-serrano-jamon-250g",
+    widget: "coupa.ng/cqinWa",
+    title: "코스트코 코스타 브라바 하몽 세라노 슬라이스 (250g, 1세트)",
+    link: "https://link.coupang.com/a/h0UT3eQcxw",
+    image: "https://t1a.coupangcdn.com/thumbnails/remote/492x492ex/image/vendor_inventory/de5a/0d5cb14117dacec6b776dea29f480c014f54b899b1433df29245bf9c9a9e.jpg",
+    desc: "여럿이 나눠 먹기 좋은 대용량 세라노 하몽",
+    badge: "",
+    category: "식품",
+    review:
+      "하몽 효능·주의점 글과 함께 소개한 대용량 세라노 슬라이스예요. 직접 먹어본 후기가 아니라 블로그 글에서 참고용으로 소개한 상품이에요. 하몽은 나트륨이 높은 가공육이라 한 번에 30~50g 정도로 즐기는 걸 추천하고, 임신 중이거나 혈압·신장 관리가 필요하다면 섭취 전 의료진과 상의하세요.",
+  },
 ];
 
 // ── 사이트 설정 (제목/소개문구 바꾸고 싶을 때 여기 수정) ──
